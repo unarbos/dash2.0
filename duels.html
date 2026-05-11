@@ -819,6 +819,14 @@ function duelErrorCount(duel) {
   return Number((duel && duel.errors) || 0);
 }
 
+function duelWinMargin() {
+  return Math.max(0, Number(indexPayload && indexPayload.scoring && indexPayload.scoring.win_margin) || 0);
+}
+
+function duelWinConditionText() {
+  return 'Win condition: wins - losses > ' + duelWinMargin();
+}
+
 function duelResultLabel(duel) {
   return duelErrorCount(duel) > 0 ? 'K/T/E/C' : 'K/T/C';
 }
@@ -967,9 +975,9 @@ function winnerSide(duel) {
   const wins = Number(duel && duel.wins);
   const losses = Number(duel && duel.losses);
   if (!Number.isFinite(wins) || !Number.isFinite(losses)) return '';
-  const margin = Math.max(0, Number(indexPayload && indexPayload.scoring && indexPayload.scoring.win_margin) || 0);
-  if (wins >= losses + margin) return 'challenger';
-  if (losses >= wins + margin) return 'king';
+  const margin = duelWinMargin();
+  if (wins - losses > margin) return 'challenger';
+  if (losses - wins > margin) return 'king';
   return 'tie';
 }
 
@@ -1344,7 +1352,8 @@ function duelNotesText(duel) {
     'King: ' + (king.repo || 'UNKNOWN') + (king.uid !== '' ? ' (UID ' + king.uid + ')' : ''),
     'Challenger: ' + (challenger.repo || 'UNKNOWN') + (challenger.uid !== '' ? ' (UID ' + challenger.uid + ')' : ''),
     'Outcome: ' + outcomeText(duel),
-    'Result ' + duelResultLabel(duel) + ': ' + duelResultText(duel)
+    'Result ' + duelResultLabel(duel) + ': ' + duelResultText(duel),
+    duelWinConditionText()
   ].join('\n');
   const rounds = arr(duel.rounds);
   const body = rounds.map((round, index) => roundNoteText(duel.duel_id, round, index)).join('\n\n---\n\n');
@@ -1421,6 +1430,7 @@ function renderStats() {
   $('duel-meta').innerHTML =
     '<span>Published duels <b>' + num(allDuels.length) + '</b></span>' +
     '<span>Latest duel <b>' + escapeHtml(latest ? idText(latest.duel_id) : '--') + '</b></span>' +
+    '<span>Margin <b>' + escapeHtml(duelWinMargin()) + '</b></span>' +
     '<span>Index updated <b>' + escapeHtml(ago(indexPayload && indexPayload.updated_at)) + '</b></span>';
   $('footer-status').textContent = allDuels.length + ' DUELS | PAGE SIZE ' + PAGE_SIZE;
 }
@@ -1508,7 +1518,7 @@ function renderDuelDetail(duel) {
       '<div class="summary-card wide"><div class="metric-label">King</div><div class="metric-value">' + repoLink(king.repo, king.url || king.pr, false) + '</div><div class="metric-note">' + uidMetric(king.uid, king.hotkey, king.netuid) + '</div></div>' +
       '<div class="summary-card wide"><div class="metric-label">Challenger</div><div class="metric-value">' + repoLink(challenger.repo, challenger.url || challenger.pr, false) + '</div><div class="metric-note">' + uidMetric(challenger.uid, challenger.hotkey, challenger.netuid) + '</div></div>' +
       '<div class="summary-card"><div class="metric-label">Outcome</div><div class="metric-value">' + outcomeTag(duel) + '</div><div class="metric-note">' + escapeHtml(outcome.note || '--') + '</div></div>' +
-      '<div class="summary-card"><div class="metric-label">Result ' + escapeHtml(duelResultLabel(duel)) + '</div><div class="metric-value">' + duelResultText(duel) + '</div><div class="metric-note">' + escapeHtml(outcome.tooltip || '--') + '</div></div>' +
+      '<div class="summary-card"><div class="metric-label">Result ' + escapeHtml(duelResultLabel(duel)) + '</div><div class="metric-value">' + duelResultText(duel) + '</div><div class="metric-note">' + escapeHtml(duelWinConditionText()) + '</div></div>' +
       '<div class="summary-card"><div class="metric-label">Rounds</div><div class="metric-value">' + num(rounds.length) + '</div><div class="metric-note">' + escapeHtml(ago(duel.finished_at)) + '</div></div>' +
       '<div class="summary-card"><div class="metric-label">Judge notes</div><div class="metric-value">' + num(judgeCount) + '</div><div class="metric-note">Published decisions</div></div>' +
       '<div class="summary-card wide notes-card"><div><div class="metric-label">Notes</div><div class="metric-note">Markdown with public artifact links</div></div>' + copyButton(duelNotesText(duel), 'Copy Duel Notes') + '</div>' +

@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+<title>NINJA 66 | Duels</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@400;600;700&family=Space+Grotesk:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: dark;
+  --black: #000000;
+  --surface: #111111;
+  --surface-raised: #1a1a1a;
+  --border: #222222;
+  --border-visible: #333333;
+  --text-disabled: #666666;
+  --text-secondary: #999999;
+  --text-primary: #e8e8e8;
+  --text-display: #ffffff;
+  --accent: #d71921;
+  --success: #4a9e5c;
+  --warning: #d4a843;
+  --interactive: #5b9bf6;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --font-display: "Doto", "Space Mono", monospace;
+  --font-body: "Space Grotesk", system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, monospace;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --black: #f5f5f5;
+  --surface: #ffffff;
+  --surface-raised: #f0f0f0;
+  --border: #e8e8e8;
+  --border-visible: #cccccc;
+  --text-disabled: #999999;
+  --text-secondary: #666666;
+  --text-primary: #1a1a1a;
+  --text-display: #000000;
+  --interactive: #007aff;
+}
+
+* { box-sizing: border-box; }
+html {
+  height: 100%;
+  overflow: hidden;
+  background: var(--black);
+}
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--black);
+  color: var(--text-primary);
+  font: 400 14px/1.5 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a { color: var(--text-display); text-decoration: none; }
+a:hover { color: var(--interactive); }
+button,
+input {
+  font: inherit;
+}
+button {
+  border: 1px solid var(--border-visible);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  font: 700 10px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  padding: 9px 12px;
+  text-transform: uppercase;
+}
+button:hover { border-color: var(--text-display); color: var(--text-display); }
+button:disabled { cursor: default; opacity: 0.45; }
+input {
+  width: 100%;
+  border: 1px solid var(--border-visible);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font: 400 12px/1 var(--font-mono);
+  outline: none;
+  padding: 10px 14px;
+}
+input:focus { border-color: var(--text-display); }
+
+.page {
+  width: min(1640px, 100%);
+  height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+  margin: 0 auto;
+  padding: 28px 32px 40px;
+}
+.page::-webkit-scrollbar { display: none; }
+.topline {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-lg);
+  align-items: center;
+  margin-bottom: var(--space-3xl);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  min-width: 0;
+  color: var(--text-display);
+}
+.brand img { width: 36px; height: 36px; object-fit: contain; }
+.brand-word {
+  color: var(--text-display);
+  font: 700 13px/1 var(--font-mono);
+  letter-spacing: 0.18em;
+}
+.meta-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 18px;
+  color: var(--text-secondary);
+  font: 400 11px/1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.meta-strip b { color: var(--text-display); font-weight: 400; }
+.actions { display: flex; align-items: center; gap: var(--space-sm); }
+.page-intro {
+  margin-bottom: var(--space-lg);
+}
+.eyebrow {
+  color: var(--text-secondary);
+  font: 700 11px/1.2 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.duel-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+  padding: 9px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+  font: 400 11px/1.3 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.duel-meta-row b {
+  color: var(--text-display);
+  font-weight: 400;
+}
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(240px, 420px) 1fr auto;
+  gap: var(--space-md);
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+.pager {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.pager-label,
+.section-meta,
+.metric-note {
+  color: var(--text-secondary);
+  font: 400 11px/1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: var(--space-lg);
+}
+.table-wrap {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  overflow: auto;
+}
+.data-table {
+  width: 100%;
+  min-width: 1060px;
+  border-collapse: collapse;
+}
+.data-table th,
+.data-table td {
+  height: 32px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  vertical-align: middle;
+}
+.data-table th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font: 700 9px/1.2 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+}
+.data-table td {
+  font-size: 11px;
+  line-height: 1.25;
+}
+.data-table tr.duel-row { cursor: pointer; }
+.data-table tr.duel-row:hover td { background: var(--surface-raised); }
+.data-table td:not(.num):not(.mono):not(.detail-cell),
+.data-table a {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.data-table a {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: bottom;
+}
+.data-table th.num,
+.data-table td.num,
+.data-table th.mono,
+.data-table td.mono {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.expand-cell {
+  color: var(--text-secondary);
+  font: 700 10px/1 var(--font-mono);
+  text-align: center;
+}
+.duel-link {
+  color: var(--text-display);
+  font: 700 11px/1 var(--font-mono);
+}
+.detail-row { display: none; }
+.detail-row.open { display: table-row; }
+.detail-cell {
+  padding: 0 !important;
+  background: var(--black) !important;
+}
+.detail-panel {
+  padding: var(--space-lg);
+  border-top: 1px solid var(--border-visible);
+}
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+.summary-card {
+  grid-column: span 3;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 14px;
+}
+.summary-card.wide { grid-column: span 6; }
+.notes-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+.notes-card .metric-note { margin-top: 8px; }
+.notes-card .copy-btn { flex: 0 0 auto; }
+.metric-label {
+  color: var(--text-secondary);
+  font: 700 10px/1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.metric-value {
+  margin-top: 8px;
+  color: var(--text-display);
+  font: 400 20px/1.1 var(--font-mono);
+  overflow-wrap: anywhere;
+}
+.round-table { min-width: 1040px; }
+.round-table th.task-col,
+.round-table td.task-cell {
+  text-align: left;
+}
+.task-cell {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.task-code {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--border-visible);
+  border-radius: 10px;
+  background: var(--black);
+  color: var(--text-display);
+  font: 400 12px/1.45 var(--font-mono);
+  letter-spacing: 0.01em;
+  padding: 10px 12px;
+  text-align: left;
+  text-transform: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.task-code:hover,
+.task-code:focus-visible {
+  border-color: var(--text-secondary);
+  background: var(--surface-raised);
+  color: var(--text-display);
+}
+.task-code:focus-visible {
+  outline: 2px solid var(--border-visible);
+  outline-offset: 2px;
+}
+.task-code.copied {
+  border-color: var(--success);
+  color: var(--success);
+}
+.task-code.failed {
+  border-color: var(--warning);
+  color: var(--warning);
+}
+.task-code.copied::after {
+  content: " copied";
+  color: var(--success);
+  font-weight: 700;
+}
+.round-row { cursor: pointer; }
+.round-row:hover td { background: var(--surface-raised); }
+.round-detail-row { display: none; }
+.round-detail-row.open { display: table-row; }
+.round-detail {
+  padding: 0 !important;
+  background: var(--black) !important;
+}
+.round-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 380px);
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  border-top: 1px solid var(--border-visible);
+}
+.note-text {
+  margin: 10px 0 0;
+  color: var(--text-primary);
+  font: 400 13px/1.55 var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.artifact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+.artifact-link {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font: 700 10px/1.2 var(--font-mono);
+  letter-spacing: 0.06em;
+  padding: 10px 12px;
+  text-transform: uppercase;
+}
+.artifact-link:hover { border-color: var(--interactive); }
+.artifact-heading { margin-top: var(--space-lg); }
+.copy-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+.round-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+.round-metric {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 10px 12px;
+}
+.round-metric .metric-note { margin-top: 6px; }
+.copy-btn.copied { color: var(--success); border-color: var(--success); }
+.copy-btn.failed { color: var(--warning); border-color: var(--warning); }
+#ninja-tooltip {
+  position: fixed;
+  z-index: 9999;
+  max-width: min(360px, 70vw);
+  padding: 5px 7px;
+  border: 1px solid var(--border-visible);
+  border-radius: 4px;
+  background: var(--black);
+  color: var(--text-primary);
+  font: 400 9px/1.3 var(--font-mono);
+  letter-spacing: 0.02em;
+  opacity: 0;
+  pointer-events: none;
+  text-transform: none;
+  transform: translate3d(0, 2px, 0);
+  transition: opacity 80ms linear, transform 80ms linear;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+#ninja-tooltip.visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+.tag {
+  display: inline-block;
+  border: 1px solid var(--border-visible);
+  border-radius: 999px;
+  padding: 4px 9px;
+  color: var(--text-primary);
+  font: 700 10px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.tag.good { color: var(--success); border-color: var(--success); }
+.tag.bad { color: var(--accent); border-color: var(--accent); }
+.tag.warn { color: var(--warning); border-color: var(--warning); }
+.outcome-detail {
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font: 400 10px/1.35 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.outcome-detail a { color: var(--text-secondary); text-decoration: underline; text-underline-offset: 2px; }
+.status-ok { color: var(--success) !important; }
+.status-warn { color: var(--warning) !important; }
+.status-bad { color: var(--accent) !important; }
+.muted { color: var(--text-secondary); }
+.empty,
+.error-box {
+  padding: var(--space-2xl);
+  color: var(--text-secondary);
+  font: 700 12px/1.4 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.error-box {
+  border: 1px solid var(--accent);
+  border-radius: 16px;
+  color: var(--accent);
+  text-align: left;
+}
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  justify-content: space-between;
+  margin-top: var(--space-3xl);
+  color: var(--text-secondary);
+  font: 400 10px/1.4 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .page { padding: 20px 16px 32px; }
+  .topline,
+  .toolbar,
+  .round-card { grid-template-columns: 1fr; }
+  .actions { align-items: flex-start; flex-direction: column; }
+  .meta-strip,
+  .pager { justify-content: flex-start; }
+  .summary-card,
+  .summary-card.wide { grid-column: span 12; }
+  .notes-card { flex-direction: column; }
+}
+@media (max-width: 700px) {
+  body { font-size: 13px; }
+  button {
+    min-height: 36px;
+    padding: 9px 11px;
+    font-size: 9px;
+  }
+  input {
+    min-height: 40px;
+    font-size: 11px;
+  }
+  .page { padding: 14px 10px 28px; }
+  .topline { gap: var(--space-md); margin-bottom: var(--space-xl); }
+  .brand img { width: 30px; height: 30px; }
+  .brand-word { font-size: 12px; }
+  .actions {
+    width: 100%;
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  .meta-strip {
+    gap: 6px 12px;
+    font-size: 9px;
+    letter-spacing: 0.06em;
+  }
+  .page-intro { margin-bottom: var(--space-md); }
+  .duel-meta-row { font-size: 10px; gap: 6px 12px; }
+  .toolbar {
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+  }
+  .pager {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    width: 100%;
+  }
+  .pager button { width: 100%; }
+  .pager-label {
+    min-width: 84px;
+    text-align: center;
+  }
+  .card,
+  .table-wrap {
+    border-radius: 12px;
+  }
+  .table-wrap {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  .data-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+  .data-table th,
+  .data-table td {
+    height: 38px;
+    padding: 6px 5px;
+  }
+  .data-table th {
+    font-size: 8px;
+    letter-spacing: 0.04em;
+  }
+  .data-table td {
+    font-size: 10px;
+    line-height: 1.2;
+  }
+  .data-table .tag {
+    max-width: 100%;
+    padding: 3px 5px;
+    font-size: 8px;
+    letter-spacing: 0.04em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .expand-cell {
+    padding-inline: 2px !important;
+    font-size: 12px;
+  }
+  .duel-link {
+    width: 100%;
+    font-size: 10px;
+  }
+  #duel-panel > table.data-table > colgroup > col:nth-child(1) { width: 8% !important; }
+  #duel-panel > table.data-table > colgroup > col:nth-child(2) { width: 20% !important; }
+  #duel-panel > table.data-table > colgroup > col:nth-child(4) { width: 32% !important; }
+  #duel-panel > table.data-table > colgroup > col:nth-child(5) { width: 20% !important; }
+  #duel-panel > table.data-table > colgroup > col:nth-child(6) { width: 20% !important; }
+  #duel-panel > table.data-table > colgroup > col:nth-child(3),
+  #duel-panel > table.data-table > colgroup > col:nth-child(7),
+  #duel-panel > table.data-table > colgroup > col:nth-child(8),
+  #duel-panel > table.data-table > thead th:nth-child(3),
+  #duel-panel > table.data-table > thead th:nth-child(7),
+  #duel-panel > table.data-table > thead th:nth-child(8),
+  #duel-panel > table.data-table > tbody > tr.duel-row > td:nth-child(3),
+  #duel-panel > table.data-table > tbody > tr.duel-row > td:nth-child(7),
+  #duel-panel > table.data-table > tbody > tr.duel-row > td:nth-child(8) {
+    display: none;
+  }
+  .detail-panel {
+    padding: var(--space-sm);
+  }
+  .summary-grid {
+    display: block;
+    margin-bottom: var(--space-sm);
+  }
+  .summary-card,
+  .summary-card.wide {
+    margin-bottom: var(--space-sm);
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+  .summary-card:last-child { margin-bottom: 0; }
+  .metric-value {
+    margin-top: 5px;
+    font-size: 15px;
+    line-height: 1.2;
+  }
+  .metric-label,
+  .metric-note {
+    font-size: 9px;
+    letter-spacing: 0.06em;
+  }
+  .notes-card {
+    gap: var(--space-sm);
+  }
+  .notes-card .copy-btn,
+  .copy-row .copy-btn {
+    width: 100%;
+  }
+  .round-table col:nth-child(1) { width: 8% !important; }
+  .round-table col:nth-child(2) { width: 42% !important; }
+  .round-table col:nth-child(3) { width: 24% !important; }
+  .round-table col:nth-child(5) { width: 26% !important; }
+  .round-table col:nth-child(4),
+  .round-table col:nth-child(6),
+  .round-table col:nth-child(7),
+  .round-table thead th:nth-child(4),
+  .round-table thead th:nth-child(6),
+  .round-table thead th:nth-child(7),
+  .round-table tbody > tr.round-row > td:nth-child(4),
+  .round-table tbody > tr.round-row > td:nth-child(6),
+  .round-table tbody > tr.round-row > td:nth-child(7) {
+    display: none;
+  }
+  .round-table th:nth-child(5),
+  .round-table tbody > tr.round-row > td:nth-child(5) {
+    text-align: right;
+  }
+  .task-cell {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .round-card {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+    padding: var(--space-sm);
+  }
+  .round-metric-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .round-metric {
+    padding: 8px 10px;
+  }
+  .note-text {
+    max-width: 100%;
+    font-size: 12px;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+  .task-code {
+    min-height: 44px;
+    padding: 10px;
+    font-size: 11px;
+  }
+  .artifact-grid {
+    grid-template-columns: 1fr;
+  }
+  .artifact-link {
+    min-height: 40px;
+    padding: 11px 12px;
+  }
+  #ninja-tooltip { max-width: calc(100vw - 24px); }
+  .footer {
+    gap: var(--space-sm);
+    margin-top: var(--space-xl);
+    font-size: 9px;
+  }
+}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="topline">
+    <a class="brand" href="./index.html" aria-label="Back to NINJA 66 dashboard">
+      <img src="/favicon.png" alt="">
+      <span class="brand-word">NINJA 66</span>
+    </a>
+    <div class="actions">
+      <div class="meta-strip">
+        <span>Status <b id="system-status">LOADING</b></span>
+        <span>Updated <b id="updated-at">--</b></span>
+        <span>Rows <b id="row-count">--</b></span>
+      </div>
+      <button id="theme-toggle" type="button">Light</button>
+    </div>
+  </header>
+
+  <section class="page-intro">
+    <div class="eyebrow">Duel Explorer</div>
+  </section>
+
+  <section>
+    <div class="duel-meta-row" id="duel-meta">
+      <span>Index <b>LOADING</b></span>
+    </div>
+    <div class="toolbar">
+      <label>
+        <span class="eyebrow">Search</span>
+        <input id="search-input" type="search" placeholder="duel id, repo, UID" autocomplete="off">
+      </label>
+      <div class="section-meta" id="filter-meta">--</div>
+      <div class="pager" aria-label="Duel pagination">
+        <button id="prev-page" type="button">Prev</button>
+        <span class="pager-label" id="page-label">--</span>
+        <button id="next-page" type="button">Next</button>
+      </div>
+    </div>
+    <div id="duel-panel" class="table-wrap">
+      <div class="empty">[LOADING DUEL INDEX]</div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span id="footer-status">[LOADING]</span>
+    <span><a href="./index.html">Dashboard</a> | <a href="./duels/index.json">Duel index JSON</a></span>
+  </footer>
+</main>
+
+<script>
+const INDEX_URL = './duels/index.json';
+const PAGE_SIZE = 50;
+const PUBLIC_BASE = 'https://us-east-1.hippius.com/constantinople/sn66';
+const BASE_REPO_FULL_NAME = 'unarbos/ninja';
+
+let indexPayload = null;
+let allDuels = [];
+let filteredDuels = [];
+let currentPage = 1;
+let expandedDuelId = '';
+let selectedRoundKey = '';
+
+const duelCache = new Map();
+const copyStore = new Map();
+let copySeq = 0;
+let tooltipEl = null;
+let tooltipTargetEl = null;
+
+const $ = (id) => document.getElementById(id);
+const arr = (value) => Array.isArray(value) ? value : [];
+const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[char]));
+}
+
+function safeHref(value, fallback) {
+  const text = String(value || fallback || '#');
+  if (text === '#') return '#';
+  try {
+    const url = new URL(text, window.location.href);
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : '#';
+  } catch (_) {
+    return '#';
+  }
+}
+
+function idText(value) {
+  const text = String(value ?? '').replace(/\D/g, '');
+  return text ? text.padStart(6, '0') : '';
+}
+
+function timestampMs(value) {
+  if (!value) return null;
+  const time = new Date(value).getTime();
+  return Number.isFinite(time) ? time : null;
+}
+
+function ago(iso) {
+  if (!iso) return '--';
+  const time = timestampMs(iso);
+  if (time == null) return '--';
+  const diff = Math.max(0, Date.now() - time);
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'NOW';
+  if (mins < 60) return mins + 'M AGO';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'H ' + (mins % 60) + 'M AGO';
+  const days = Math.floor(hrs / 24);
+  return days + 'D ' + (hrs % 24) + 'H AGO';
+}
+
+function num(value) {
+  return Number.isFinite(Number(value)) ? Number(value).toLocaleString() : '--';
+}
+
+function duelErrorCount(duel) {
+  return Number((duel && duel.errors) || 0);
+}
+
+function duelResultLabel(duel) {
+  return duelErrorCount(duel) > 0 ? 'K/T/E/C' : 'K/T/C';
+}
+
+function duelResultText(duel) {
+  const base = [num(duel.losses), num(duel.ties)];
+  const errors = duelErrorCount(duel);
+  if (errors > 0) base.push(num(errors));
+  base.push(num(duel.wins));
+  return base.join('/');
+}
+
+function duelResultHtml(duel) {
+  const losses = '<span class="status-ok">' + num(duel.losses) + '</span>';
+  const ties = num(duel.ties);
+  const wins = '<span class="status-bad">' + num(duel.wins) + '</span>';
+  const errors = duelErrorCount(duel);
+  if (errors > 0) return losses + '/' + ties + '/<span class="status-warn">' + num(errors) + '</span>/' + wins;
+  return losses + '/' + ties + '/' + wins;
+}
+
+function pct(value, digits = 1) {
+  return Number.isFinite(Number(value)) ? (Number(value) * 100).toFixed(digits) + '%' : '--';
+}
+
+function score(value) {
+  return Number.isFinite(Number(value)) ? Number(value).toFixed(3) : '--';
+}
+
+function mean(values) {
+  const clean = values.map(Number).filter(Number.isFinite);
+  if (!clean.length) return null;
+  return clean.reduce((sum, value) => sum + value, 0) / clean.length;
+}
+
+function normalizeRisk(value) {
+  const numericRisk = Number(value);
+  if (!Number.isFinite(numericRisk)) return null;
+  return clamp(numericRisk > 1 ? numericRisk / 100 : numericRisk, 0, 1);
+}
+
+function riskPct(value) {
+  const risk = normalizeRisk(value);
+  return risk == null ? '--' : pct(risk);
+}
+
+function repoName(item, prefix) {
+  if (!item) return '';
+  if (prefix) return item[prefix + '_display_repo_full_name'] || item[prefix + '_repo_full_name'] || item[prefix + '_repo'] || '';
+  return item.display_repo_full_name || item.repo_full_name || item.repo || '';
+}
+
+function repoUrl(item, prefix) {
+  if (!item) return '';
+  if (prefix) return item[prefix + '_pr_url'] || item[prefix + '_repo_url'] || '';
+  return item.pr_url || item.repo_url || '';
+}
+
+function isBaseRepo(repo) {
+  return String(repo || '').replace(/\.git$/, '').toLowerCase() === BASE_REPO_FULL_NAME;
+}
+
+function summaryRepoName(item, prefix) {
+  const repo = repoName(item, prefix);
+  if (prefix === 'king' && isBaseRepo(repo) && !item[prefix + '_display_repo_full_name']) {
+    return '';
+  }
+  return repo;
+}
+
+function repoLink(repo, url, compact) {
+  if (!repo) return '<span class="muted">UNKNOWN</span>';
+  const label = compact ? String(repo).split('/')[0] : String(repo);
+  const href = url || 'https://github.com/' + repo;
+  const tooltip = tooltipAttrs(repo);
+  return '<a' + tooltip + ' href="' + safeHref(href, '#') + '" target="_blank" rel="noreferrer">' + escapeHtml(label) + '</a>';
+}
+
+function hotkeyUrl(hotkey, netuid) {
+  if (!hotkey) return '';
+  return 'https://taomarketcap.com/subnets/' + encodeURIComponent(netuid || 66) + '/miners?query=' + encodeURIComponent(hotkey);
+}
+
+function shortHotkey(hotkey) {
+  const text = String(hotkey || '').trim();
+  if (!text) return '';
+  return text.length > 14 ? text.slice(0, 6) + '...' + text.slice(-6) : text;
+}
+
+function uidMetric(uid, hotkey, netuid) {
+  const label = uid !== '' && uid != null ? 'UID ' + escapeHtml(uid) : escapeHtml(shortHotkey(hotkey) || 'UNKNOWN');
+  if (!hotkey) return label;
+  return '<a' + tooltipAttrs(hotkey) + ' href="' + safeHref(hotkeyUrl(hotkey, netuid), '#') + '" target="_blank" rel="noreferrer">' + label + '</a>';
+}
+
+function participantLink(identity, compact, fallbackLabel) {
+  if (identity && identity.repo) return repoLink(identity.repo, identity.url || identity.pr, compact);
+  if (identity && (identity.uid !== '' || identity.hotkey)) return uidMetric(identity.uid, identity.hotkey, identity.netuid);
+  return '<span class="muted"' + tooltipAttrs(fallbackLabel || 'Identity is unavailable in the duel index.') + '>' + (fallbackLabel ? 'EXPAND' : 'UNKNOWN') + '</span>';
+}
+
+function tooltipAttrs(value) {
+  const text = String(value ?? '').trim();
+  if (!text) return '';
+  const safe = escapeHtml(text);
+  return ' data-tooltip="' + safe + '" aria-label="' + safe + '"';
+}
+
+function shortTaskId(value) {
+  const text = String(value ?? '').trim();
+  if (!text) return '';
+  const parts = text.split('-').filter(Boolean);
+  const suffix = parts.length > 1 ? parts[parts.length - 1] : text;
+  return suffix.length > 10 ? suffix.slice(-10) : suffix;
+}
+
+function participant(duel, prefix) {
+  const source = prefix === 'king' ? (duel.king_before || duel.king || duel.king_after || {}) : (duel.challenger || {});
+  const summary = findSummary(duel.duel_id) || {};
+  return {
+    repo: repoName(source) || summaryRepoName(summary, prefix),
+    url: repoUrl(source) || repoUrl(summary, prefix),
+    uid: source.uid ?? summary[prefix + '_uid'] ?? '',
+    hotkey: source.hotkey || summary[prefix + '_hotkey'] || '',
+    commit: source.display_commit_sha || source.commit_sha || summary[prefix + '_display_commit_sha'] || summary[prefix + '_commit_sha'] || '',
+    pr: source.pr_url || summary[prefix + '_pr_url'] || '',
+    netuid: source.netuid || summary.netuid || summary.subnet_uid || summary.subnet_netuid || 66
+  };
+}
+
+function duelKey(value) {
+  return idText(value).replace(/^0+/, '') || '';
+}
+
+function sameDuel(a, b) {
+  const left = duelKey(a);
+  const right = duelKey(b);
+  return !!left && !!right && left === right;
+}
+
+function booleanValue(value) {
+  return value === true ? true : value === false ? false : null;
+}
+
+function winnerSide(duel) {
+  const wins = Number(duel && duel.wins);
+  const losses = Number(duel && duel.losses);
+  if (!Number.isFinite(wins) || !Number.isFinite(losses)) return '';
+  const margin = Math.max(0, Number(indexPayload && indexPayload.scoring && indexPayload.scoring.win_margin) || 0);
+  if (wins >= losses + margin) return 'challenger';
+  if (losses >= wins + margin) return 'king';
+  return 'tie';
+}
+
+function sameMatchup(a, b) {
+  if (!a || !b) return false;
+  const aKing = a.king_uid ?? a.king_hotkey ?? summaryRepoName(a, 'king');
+  const bKing = b.king_uid ?? b.king_hotkey ?? summaryRepoName(b, 'king');
+  const aChallenger = a.challenger_uid ?? a.challenger_hotkey ?? a.challenger_repo;
+  const bChallenger = b.challenger_uid ?? b.challenger_hotkey ?? b.challenger_repo;
+  return aKing != null && bKing != null && String(aKing) === String(bKing) &&
+    aChallenger != null && bChallenger != null && String(aChallenger) === String(bChallenger);
+}
+
+function sameMinerIdentity(a, b) {
+  if (!a || !b) return false;
+  const aUid = a.uid ?? a.challenger_uid ?? a.king_uid;
+  const bUid = b.uid ?? b.challenger_uid ?? b.king_uid;
+  if (aUid != null && bUid != null && String(aUid) === String(bUid)) return true;
+  const aHotkey = a.hotkey || a.challenger_hotkey || a.king_hotkey;
+  const bHotkey = b.hotkey || b.challenger_hotkey || b.king_hotkey;
+  return !!aHotkey && !!bHotkey && String(aHotkey) === String(bHotkey);
+}
+
+function challengerRef(duel) {
+  return {
+    uid: duel && duel.challenger_uid,
+    hotkey: duel && (duel.challenger_hotkey || duel.hotkey),
+    repo: duel && duel.challenger_repo
+  };
+}
+
+function challengerIsCurrentKing(duel) {
+  return !!(indexPayload && indexPayload.current_king && sameMinerIdentity(indexPayload.current_king, challengerRef(duel)));
+}
+
+function nearbyDuel(a, b) {
+  const at = timestampMs(a && (a.finished_at || a.started_at));
+  const bt = timestampMs(b && (b.finished_at || b.started_at));
+  if (at == null || bt == null) return true;
+  return Math.abs(bt - at) <= 3 * 60 * 60 * 1000;
+}
+
+function duelAnchor(id) {
+  const text = idText(id);
+  if (!text) return '--';
+  return '<a href="./duels.html?duel=' + encodeURIComponent(text) + '" data-duel-link="' + escapeHtml(text) + '">' + escapeHtml(text) + '</a>';
+}
+
+function relationTarget(duel) {
+  return duel && (duel.confirmation_of_duel_id ?? duel.manual_retest_of_duel_id);
+}
+
+function findDuelRecord(id) {
+  const key = duelKey(id);
+  if (!key) return null;
+  return allDuels.find((duel) => sameDuel(duel.duel_id, key)) || null;
+}
+
+function relatedRetests(duel) {
+  const sourceId = duelKey(duel && duel.duel_id);
+  const directId = duelKey(duel && duel.confirmation_duel_id);
+  if (!sourceId && !directId) return [];
+  const seen = new Set();
+  return allDuels
+    .filter((item) => {
+      const itemId = duelKey(item.duel_id);
+      const isDirect = directId && itemId === directId;
+      const sourceMatch = sameDuel(relationTarget(item), sourceId);
+      return isDirect || sourceMatch;
+    })
+    .filter((item) => {
+      const key = duelKey(item.duel_id);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => {
+      const at = timestampMs(a.finished_at || a.started_at) || Number(a.duel_id || 0);
+      const bt = timestampMs(b.finished_at || b.started_at) || Number(b.duel_id || 0);
+      return bt - at;
+    });
+}
+
+function sourceDuel(duel) {
+  return findDuelRecord(relationTarget(duel));
+}
+
+function inferredRetestSource(duel) {
+  if (!duel || relationTarget(duel) || duel.confirmation_duel_id != null) return null;
+  if (winnerSide(duel) !== 'king') return null;
+  const currentId = Number(duel.duel_id);
+  if (!Number.isFinite(currentId)) return null;
+  return allDuels
+    .filter((item) =>
+      Number(item.duel_id) < currentId &&
+      winnerSide(item) === 'challenger' &&
+      sameMatchup(item, duel) &&
+      nearbyDuel(item, duel)
+    )
+    .sort((a, b) => Number(b.duel_id || 0) - Number(a.duel_id || 0))[0] || null;
+}
+
+function inferredRetestFor(duel) {
+  if (!duel || relationTarget(duel) || duel.confirmation_duel_id != null) return null;
+  if (winnerSide(duel) !== 'challenger') return null;
+  const currentId = Number(duel.duel_id);
+  if (!Number.isFinite(currentId)) return null;
+  return allDuels
+    .filter((item) =>
+      Number(item.duel_id) > currentId &&
+      sameMatchup(item, duel) &&
+      nearbyDuel(item, duel)
+    )
+    .sort((a, b) => Number(a.duel_id || 0) - Number(b.duel_id || 0))[0] || null;
+}
+
+function confirmationState(duel) {
+  const related = relatedRetests(duel);
+  const latest = related[0] || null;
+  const childPass = latest ? booleanValue(latest.confirmation_retest_passed) : null;
+  const ownPass = booleanValue(duel && duel.confirmation_retest_passed);
+  return {
+    latest,
+    pass: childPass != null ? childPass : ownPass,
+    linkedId: latest ? latest.duel_id : duel && duel.confirmation_duel_id,
+    failure: (latest && latest.confirmation_failure_reason) || (duel && duel.confirmation_failure_reason) || ''
+  };
+}
+
+function duelOutcome(duel) {
+  const inferredSource = inferredRetestSource(duel);
+  const inferredRetest = inferredRetestFor(duel);
+  const source = sourceDuel(duel) || inferredSource;
+  const sourceState = source ? confirmationState(source) : null;
+  const isRetest = !!source || !!relationTarget(duel);
+  const ownState = confirmationState(duel);
+  const scoreWinner = winnerSide(duel);
+  let pass = isRetest && sourceState ? sourceState.pass : ownState.pass;
+  if (pass == null && isRetest) {
+    pass = scoreWinner === 'challenger' ? true : scoreWinner === 'king' ? false : null;
+  }
+  const linkedId = isRetest ? relationTarget(duel) || (source && source.duel_id) : ownState.linkedId || (inferredRetest && inferredRetest.duel_id);
+  const failure = isRetest && sourceState ? sourceState.failure : ownState.failure;
+
+  if (duel && duel.disqualification_reason) {
+    return { label: 'DQ', cls: 'warn', note: 'Disqualified', tooltip: duel.disqualification_reason };
+  }
+
+  if (!isRetest && challengerIsCurrentKing(duel)) {
+    return { label: 'Current king', cls: 'good', note: linkedId ? 'Retest ' + idText(linkedId) + ' confirmed' : 'Challenger is current king', tooltip: 'This challenger is the current published king.' };
+  }
+
+  if (isRetest) {
+    if (pass === false || (source && source.confirmation_retest_passed === false)) {
+      return { label: 'Retest failed', cls: 'bad', note: 'For duel ' + idText(linkedId), tooltip: failure || 'Confirmation retest did not uphold the dethrone.' };
+    }
+    if (pass === true || duel.king_replaced) {
+      return { label: 'Retest passed', cls: 'good', note: 'For duel ' + idText(linkedId), tooltip: 'Confirmation retest upheld the dethrone.' };
+    }
+    return { label: 'Retest', cls: 'warn', note: 'For duel ' + idText(linkedId), tooltip: 'Confirmation retest result is still unresolved.' };
+  }
+
+  if (scoreWinner === 'challenger') {
+    if (pass === false) {
+      return { label: 'Main set confirmed', cls: 'good', note: 'Set 02 failed / ' + idText(linkedId), tooltip: failure || 'Primary set won, but the confirmation retest failed.' };
+    }
+    if (pass === true) {
+      return { label: 'Confirmed', cls: 'good', note: 'Retest ' + idText(linkedId) + ' passed', tooltip: 'Dethrone confirmed by retest.' };
+    }
+    if (linkedId) {
+      return { label: 'Round won', cls: 'warn', note: 'Retest ' + idText(linkedId) + ' next', tooltip: 'Challenger won this round; confirmation retest follows.' };
+    }
+    return { label: 'Round won', cls: 'warn', note: 'Retest next', tooltip: 'Challenger won this round; confirmation retest is expected.' };
+  }
+
+  if (pass === false && challengerIsCurrentKing(duel)) {
+    return { label: 'Current king', cls: 'good', note: linkedId ? 'Retest ' + idText(linkedId) + ' confirmed' : 'Challenger is current king', tooltip: 'This challenger is the current published king.' };
+  }
+  if (pass === false && scoreWinner === 'challenger') {
+    return { label: 'Main set confirmed', cls: 'good', note: 'Retest ' + idText(ownState.linkedId) + ' failed', tooltip: failure || 'Primary set won, but the confirmation retest failed.' };
+  }
+  if (pass === true && (scoreWinner === 'challenger' || challengerIsCurrentKing(duel))) {
+    return { label: 'Confirmed', cls: 'good', note: 'Retest ' + idText(ownState.linkedId) + ' passed', tooltip: 'Dethrone confirmed by retest.' };
+  }
+  if (duel && duel.confirmation_duel_id != null) {
+    return { label: 'Retest pending', cls: 'warn', note: 'Awaiting retest ' + idText(duel.confirmation_duel_id), tooltip: 'Preliminary dethrone is waiting for confirmation.' };
+  }
+  if (duel && duel.king_replaced) {
+    return { label: 'Dethroned', cls: 'good', note: 'No retest link', tooltip: 'Challenger replaced the king.' };
+  }
+  return { label: 'Defended', cls: '', note: 'King held', tooltip: 'King defended the duel.' };
+}
+
+function outcomeTag(duel) {
+  const outcome = duelOutcome(duel);
+  return '<span class="tag ' + escapeHtml(outcome.cls || '') + '"' + tooltipAttrs(outcome.tooltip || outcome.note) + '>' + escapeHtml(outcome.label) + '</span>';
+}
+
+function outcomeCell(duel) {
+  const outcome = duelOutcome(duel);
+  let detail = outcome.note || '';
+  const state = confirmationState(duel);
+  if (!sourceDuel(duel) && state.linkedId) {
+    detail = detail.replace(idText(state.linkedId), duelAnchor(state.linkedId));
+  } else if (relationTarget(duel)) {
+    detail = detail.replace(idText(relationTarget(duel)), duelAnchor(relationTarget(duel)));
+  }
+  return outcomeTag(duel) + (detail ? '<div class="outcome-detail">' + detail + '</div>' : '');
+}
+
+function outcomeText(duel) {
+  const outcome = duelOutcome(duel);
+  return outcome.label + (outcome.note ? ' - ' + outcome.note : '');
+}
+
+function registerCopy(text) {
+  const key = 'copy-' + (++copySeq);
+  copyStore.set(key, String(text || ''));
+  return key;
+}
+
+function copyButton(text, label, extraClass) {
+  const key = registerCopy(text);
+  return '<button class="copy-btn ' + escapeHtml(extraClass || '') + '" type="button" data-copy-id="' + escapeHtml(key) + '" aria-label="' + escapeHtml(label || 'Copy') + '">' + escapeHtml(label || 'Copy') + '</button>';
+}
+
+function taskCodeButton(text) {
+  const key = registerCopy(text);
+  const label = 'Copy task ID ' + String(text || '');
+  return '<button class="task-code" type="button" data-copy-id="' + escapeHtml(key) + '" aria-label="' + escapeHtml(label) + '">' + escapeHtml(text || '--') + '</button>';
+}
+
+function tooltipElement() {
+  if (tooltipEl) return tooltipEl;
+  tooltipEl = document.createElement('div');
+  tooltipEl.id = 'ninja-tooltip';
+  tooltipEl.setAttribute('role', 'tooltip');
+  document.body.appendChild(tooltipEl);
+  return tooltipEl;
+}
+
+function placeTooltip(target, pointer) {
+  const tip = tooltipElement();
+  const rect = target.getBoundingClientRect();
+  const margin = 8;
+  const x = pointer ? pointer.clientX : rect.left + rect.width / 2;
+  const preferredY = pointer ? pointer.clientY : rect.top;
+  const tipRect = tip.getBoundingClientRect();
+  const left = clamp(x - tipRect.width / 2, margin, window.innerWidth - tipRect.width - margin);
+  let top = preferredY - tipRect.height - 12;
+  if (top < margin) top = rect.bottom + 10;
+  tip.style.left = left + 'px';
+  tip.style.top = clamp(top, margin, window.innerHeight - tipRect.height - margin) + 'px';
+}
+
+function showTooltip(target, pointer) {
+  const label = target && target.dataset ? target.dataset.tooltip : '';
+  if (!label) return;
+  const tip = tooltipElement();
+  tooltipTargetEl = target;
+  tip.textContent = label;
+  tip.classList.add('visible');
+  placeTooltip(target, pointer);
+}
+
+function hideTooltip(target) {
+  if (target && tooltipTargetEl && target !== tooltipTargetEl) return;
+  tooltipTargetEl = null;
+  if (tooltipEl) tooltipEl.classList.remove('visible');
+}
+
+function escapeMarkdownText(value) {
+  return String(value ?? '').replace(/([\\[\\]])/g, '\\$1').replace(/\s+/g, ' ').trim();
+}
+
+function escapeMarkdownUrl(value) {
+  return String(value ?? '').trim().replace(/\\/g, '%5C').replace(/\s/g, '%20').replace(/\)/g, '%29');
+}
+
+function artifactUrl(duelId, task, path) {
+  const safeId = encodeURIComponent(idText(duelId));
+  const safeTask = encodeURIComponent(String(task || ''));
+  return PUBLIC_BASE + '/duels/' + safeId + '/rounds/' + safeTask + '/' + path;
+}
+
+function artifactLinks(duelId, task) {
+  return [
+    ['task.txt', 'task.txt'],
+    ['reference.patch', 'reference.patch'],
+    ['king.diff', 'solutions/king.diff'],
+    ['challenger.diff', 'solutions/challenger.diff'],
+    ['king.solve.json', 'solutions/king.solve.json'],
+    ['challenger.solve.json', 'solutions/challenger.solve.json'],
+    ['king--reference.json', 'comparisons/king--reference.json'],
+    ['challenger--reference.json', 'comparisons/challenger--reference.json'],
+    ['king--challenger.json', 'comparisons/king--challenger.json']
+  ].map(([label, path]) => {
+    const href = artifactUrl(duelId, task, path);
+    return '<a class="artifact-link" href="' + safeHref(href, '#') + '" target="_blank" rel="noreferrer">' + escapeHtml(label) + '</a>';
+  }).join('');
+}
+
+function roundNoteText(duelId, round, index) {
+  const task = round.task_name || ('round ' + (index + 1));
+  const note = round.llm_judge_error || round.error || round.llm_judge_rationale || '[NO JUDGE RATIONALE]';
+  const judgeNotes = judgeDecisionMarkdown(round);
+  const links = [
+    ['task.txt', 'task.txt'],
+    ['reference.patch', 'reference.patch'],
+    ['king.diff', 'solutions/king.diff'],
+    ['challenger.diff', 'solutions/challenger.diff'],
+    ['king.solve.json', 'solutions/king.solve.json'],
+    ['challenger.solve.json', 'solutions/challenger.solve.json'],
+    ['king--reference.json', 'comparisons/king--reference.json'],
+    ['challenger--reference.json', 'comparisons/challenger--reference.json'],
+    ['king--challenger.json', 'comparisons/king--challenger.json']
+  ].map(([label, path]) => '- [' + escapeMarkdownText(label) + '](' + escapeMarkdownUrl(artifactUrl(duelId, task, path)) + ')').join('\n');
+  return [
+    'Duel: ' + idText(duelId),
+    'Task: ' + task,
+    'Winner: ' + String(round.llm_judge_winner || round.winner || 'tie').toUpperCase(),
+    'Consensus: ' + (round.llm_judge_consensus_status || '--'),
+    '',
+    note,
+    judgeNotes ? '\n' + judgeNotes : '',
+    '',
+    'Artifacts:',
+    links
+  ].join('\n');
+}
+
+function judgeDecisions(round) {
+  return arr(round.llm_judge_rounds)
+    .map((entry) => ({
+      round: entry && entry.round,
+      model: entry && entry.model,
+      decision: entry && entry.final_decision
+    }))
+    .filter((item) => item.decision && (item.decision.rationale || item.decision.winner));
+}
+
+function judgeDecisionMarkdown(round) {
+  const decisions = judgeDecisions(round);
+  if (!decisions.length) return '';
+  return [
+    'Judge decisions:',
+    ...decisions.map((item) => {
+      const decision = item.decision || {};
+      return '- ' + (item.model || 'judge') +
+        ' r' + (item.round || '?') +
+        ': ' + String(decision.winner || 'tie').toUpperCase() +
+        (decision.rationale ? ' - ' + decision.rationale : '');
+    })
+  ].join('\n');
+}
+
+function judgeDecisionBlocks(round) {
+  const decisions = judgeDecisions(round);
+  if (!decisions.length) return '';
+  return '<div class="metric-label">Judge Reasoning</div>' + decisions.map((item) => {
+    const decision = item.decision || {};
+    const heading = (item.model || 'judge') + ' / r' + (item.round || '?') + ' / ' + String(decision.winner || 'tie').toUpperCase();
+    return '<div class="note-text"><strong>' + escapeHtml(heading) + '</strong><br>' + escapeHtml(decision.rationale || '[NO RATIONALE]') + '</div>';
+  }).join('');
+}
+
+function duelNotesText(duel) {
+  const king = participant(duel, 'king');
+  const challenger = participant(duel, 'challenger');
+  const header = [
+    'Duel: ' + idText(duel.duel_id),
+    'King: ' + (king.repo || 'UNKNOWN') + (king.uid !== '' ? ' (UID ' + king.uid + ')' : ''),
+    'Challenger: ' + (challenger.repo || 'UNKNOWN') + (challenger.uid !== '' ? ' (UID ' + challenger.uid + ')' : ''),
+    'Outcome: ' + outcomeText(duel),
+    'Result ' + duelResultLabel(duel) + ': ' + duelResultText(duel)
+  ].join('\n');
+  const rounds = arr(duel.rounds);
+  const body = rounds.map((round, index) => roundNoteText(duel.duel_id, round, index)).join('\n\n---\n\n');
+  return header + '\n\n' + (body || '[NO ROUNDS]');
+}
+
+function findSummary(id) {
+  const wanted = idText(id).replace(/^0+/, '') || String(id || '');
+  return allDuels.find((duel) => {
+    const duelId = idText(duel.duel_id).replace(/^0+/, '') || String(duel.duel_id || '');
+    return duelId === wanted;
+  }) || null;
+}
+
+function sortDuels(duels) {
+  return arr(duels).slice().sort((a, b) => {
+    const at = timestampMs(a.finished_at || a.started_at) || 0;
+    const bt = timestampMs(b.finished_at || b.started_at) || 0;
+    if (bt !== at) return bt - at;
+    return Number(b.duel_id || 0) - Number(a.duel_id || 0);
+  });
+}
+
+function searchableText(duel) {
+  const id = idText(duel.duel_id);
+  const source = duelCache.get(id) || duel;
+  const king = participant(source, 'king');
+  const challenger = participant(source, 'challenger');
+  return [
+    id,
+    duel.duel_id,
+    king.repo,
+    challenger.repo,
+    king.uid,
+    challenger.uid,
+    king.hotkey,
+    challenger.hotkey,
+    outcomeText(duel),
+    duel.confirmation_duel_id,
+    duel.confirmation_of_duel_id,
+    duel.confirmation_retest_passed,
+    duel.confirmation_failure_reason
+  ].filter((value) => value != null && String(value).trim() !== '').join(' ').toLowerCase();
+}
+
+function applyFilter() {
+  const query = $('search-input').value.trim().toLowerCase();
+  filteredDuels = query ? allDuels.filter((duel) => searchableText(duel).includes(query)) : allDuels.slice();
+  const maxPage = totalPages();
+  currentPage = clamp(currentPage, 1, maxPage);
+}
+
+function totalPages() {
+  return Math.max(1, Math.ceil(filteredDuels.length / PAGE_SIZE));
+}
+
+function updateUrl() {
+  const params = new URLSearchParams();
+  if (currentPage > 1) params.set('page', String(currentPage));
+  if (expandedDuelId) params.set('duel', expandedDuelId);
+  const next = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+  window.history.replaceState(null, '', next);
+}
+
+function setStatus(message, ok) {
+  $('system-status').textContent = message;
+  $('system-status').className = ok ? 'status-ok' : 'status-bad';
+}
+
+function renderStats() {
+  const latest = allDuels[0];
+  $('updated-at').textContent = ago(indexPayload && indexPayload.updated_at);
+  $('row-count').textContent = num(allDuels.length);
+  $('duel-meta').innerHTML =
+    '<span>Published duels <b>' + num(allDuels.length) + '</b></span>' +
+    '<span>Latest duel <b>' + escapeHtml(latest ? idText(latest.duel_id) : '--') + '</b></span>' +
+    '<span>Index updated <b>' + escapeHtml(ago(indexPayload && indexPayload.updated_at)) + '</b></span>';
+  $('footer-status').textContent = allDuels.length + ' DUELS | PAGE SIZE ' + PAGE_SIZE;
+}
+
+function renderTable() {
+  copyStore.clear();
+  applyFilter();
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageItems = filteredDuels.slice(start, start + PAGE_SIZE);
+  const maxPage = totalPages();
+  $('prev-page').disabled = currentPage <= 1;
+  $('next-page').disabled = currentPage >= maxPage;
+  $('page-label').textContent = 'PAGE ' + currentPage + ' / ' + maxPage;
+  $('filter-meta').textContent = filteredDuels.length + ' MATCHING | ' + (pageItems.length ? (start + 1) + '-' + (start + pageItems.length) : '0') + ' SHOWN';
+
+  if (!pageItems.length) {
+    $('duel-panel').className = 'card';
+    $('duel-panel').innerHTML = '<div class="empty">[NO DUELS MATCH FILTER]</div>';
+    updateUrl();
+    return;
+  }
+
+  let rows = '';
+  for (const duel of pageItems) {
+    const id = idText(duel.duel_id);
+    const open = expandedDuelId === id;
+    const identitySource = duelCache.get(id) || duel;
+    const king = participant(identitySource, 'king');
+    const challenger = participant(identitySource, 'challenger');
+    rows += '<tr class="duel-row" data-duel-id="' + escapeHtml(id) + '">' +
+      '<td class="expand-cell">' + (open ? '-' : '+') + '</td>' +
+      '<td class="num"><a class="duel-link" href="./duels.html?duel=' + encodeURIComponent(id) + '" data-duel-link="' + escapeHtml(id) + '">' + escapeHtml(id) + '</a></td>' +
+      '<td>' + participantLink(king, true, 'The duel index only exposes the validator base repo for this king; expand to load the duel-specific identity.') + '</td>' +
+      '<td>' + participantLink(challenger, true) + '</td>' +
+      '<td>' + outcomeCell(duel) + '</td>' +
+      '<td class="num" title="' + escapeHtml(duelResultLabel(duel)) + '">' + duelResultHtml(duel) + '</td>' +
+      '<td class="num">' + num(arr(duel.rounds).length) + '</td>' +
+      '<td class="mono">' + escapeHtml(ago(duel.finished_at || duel.started_at)) + '</td>' +
+    '</tr>' +
+    '<tr class="detail-row ' + (open ? 'open' : '') + '" id="duel-detail-row-' + escapeHtml(id) + '"><td class="detail-cell" colspan="8"><div class="detail-panel" id="duel-detail-' + escapeHtml(id) + '">' + (open ? detailPlaceholder(id) : '') + '</div></td></tr>';
+  }
+
+  $('duel-panel').className = 'table-wrap';
+  $('duel-panel').innerHTML = '<table class="data-table"><colgroup><col style="width:4%"><col style="width:9%"><col style="width:22%"><col style="width:26%"><col style="width:12%"><col style="width:10%"><col style="width:8%"><col style="width:9%"></colgroup><thead><tr><th></th><th class="num">Duel</th><th>King</th><th>Challenger</th><th>Verdict</th><th class="num">Result</th><th class="num">Tasks</th><th class="mono">When</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  updateUrl();
+  if (expandedDuelId) loadDuel(expandedDuelId);
+}
+
+function detailPlaceholder(id) {
+  return '<div class="empty">[LOADING DUEL ' + escapeHtml(id) + ']</div>';
+}
+
+async function loadDuel(id) {
+  const panel = $('duel-detail-' + id);
+  if (!panel) return;
+  if (duelCache.has(id)) {
+    panel.innerHTML = renderDuelDetail(duelCache.get(id));
+    return;
+  }
+  panel.innerHTML = detailPlaceholder(id);
+  try {
+    const response = await fetch('./duels/' + encodeURIComponent(id) + '.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const duel = await response.json();
+    duelCache.set(id, duel);
+    if (expandedDuelId === id) {
+      renderTable();
+    } else {
+      panel.innerHTML = renderDuelDetail(duel);
+    }
+  } catch (_) {
+    panel.innerHTML = '<div class="error-box">[DUEL ARTIFACT UNAVAILABLE]</div>';
+  }
+}
+
+function renderDuelDetail(duel) {
+  const id = idText(duel.duel_id);
+  const rounds = arr(duel.rounds);
+  const king = participant(duel, 'king');
+  const challenger = participant(duel, 'challenger');
+  const outcome = duelOutcome(duel);
+  const judgeCount = rounds.reduce((sum, round) => sum + judgeDecisions(round).length, 0);
+  const summary =
+    '<div class="summary-grid">' +
+      '<div class="summary-card wide"><div class="metric-label">King</div><div class="metric-value">' + repoLink(king.repo, king.url || king.pr, false) + '</div><div class="metric-note">' + uidMetric(king.uid, king.hotkey, king.netuid) + '</div></div>' +
+      '<div class="summary-card wide"><div class="metric-label">Challenger</div><div class="metric-value">' + repoLink(challenger.repo, challenger.url || challenger.pr, false) + '</div><div class="metric-note">' + uidMetric(challenger.uid, challenger.hotkey, challenger.netuid) + '</div></div>' +
+      '<div class="summary-card"><div class="metric-label">Outcome</div><div class="metric-value">' + outcomeTag(duel) + '</div><div class="metric-note">' + escapeHtml(outcome.note || '--') + '</div></div>' +
+      '<div class="summary-card"><div class="metric-label">Result ' + escapeHtml(duelResultLabel(duel)) + '</div><div class="metric-value">' + duelResultText(duel) + '</div><div class="metric-note">' + escapeHtml(outcome.tooltip || '--') + '</div></div>' +
+      '<div class="summary-card"><div class="metric-label">Rounds</div><div class="metric-value">' + num(rounds.length) + '</div><div class="metric-note">' + escapeHtml(ago(duel.finished_at)) + '</div></div>' +
+      '<div class="summary-card"><div class="metric-label">Judge notes</div><div class="metric-value">' + num(judgeCount) + '</div><div class="metric-note">Published decisions</div></div>' +
+      '<div class="summary-card wide notes-card"><div><div class="metric-label">Notes</div><div class="metric-note">Markdown with public artifact links</div></div>' + copyButton(duelNotesText(duel), 'Copy Duel Notes') + '</div>' +
+    '</div>';
+
+  const rows = rounds.map((round, index) => renderRoundRows(duel, round, index)).join('');
+  const table = rows
+    ? '<div class="table-wrap"><table class="data-table round-table"><colgroup><col style="width:4%"><col style="width:34%"><col style="width:13%"><col style="width:18%"><col style="width:16%"><col style="width:15%"></colgroup><thead><tr><th></th><th class="task-col">Task</th><th>Winner</th><th>Consensus</th><th>Exit</th><th class="num">Judges</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+    : '<div class="empty">[NO ROUNDS IN DUEL ARTIFACT]</div>';
+  return summary + table;
+}
+
+function renderRoundRows(duel, round, index) {
+  const duelId = idText(duel.duel_id);
+  const task = round.task_name || ('round-' + (index + 1));
+  const key = duelId + ':' + index;
+  const open = selectedRoundKey === key;
+  const winner = String(round.llm_judge_winner || round.winner || 'tie').toLowerCase();
+  const taskLabel = shortTaskId(task) || task;
+  const judgeCount = judgeDecisions(round).length || arr(round.llm_judge_models).length;
+  return '<tr class="round-row" data-round-key="' + escapeHtml(key) + '">' +
+    '<td class="expand-cell">' + (open ? '-' : '+') + '</td>' +
+    '<td class="task-cell"><span' + tooltipAttrs(task) + '>' + escapeHtml(taskLabel) + '</span></td>' +
+    '<td>' + winnerTag(winner) + '</td>' +
+    '<td>' + escapeHtml(round.llm_judge_consensus_status || '--') + '</td>' +
+    '<td>' + escapeHtml(round.challenger_exit_reason || '--') + '</td>' +
+    '<td class="num">' + num(judgeCount) + '</td>' +
+  '</tr>' +
+  '<tr class="round-detail-row ' + (open ? 'open' : '') + '" id="round-detail-' + escapeHtml(key) + '"><td class="round-detail" colspan="6">' + (open ? renderRoundDetail(duel, round, index) : '') + '</td></tr>';
+}
+
+function winnerTag(winner) {
+  if (winner === 'challenger') return '<span class="tag good">Challenger</span>';
+  if (winner === 'king') return '<span class="tag bad">King</span>';
+  if (winner === 'error') return '<span class="tag warn">Error</span>';
+  return '<span class="tag">Tie</span>';
+}
+
+function renderRoundDetail(duel, round, index) {
+  const duelId = idText(duel.duel_id);
+  const task = round.task_name || ('round-' + (index + 1));
+  const note = round.llm_judge_error || round.error || round.llm_judge_rationale || '[NO RATIONALE]';
+  const winner = String(round.llm_judge_winner || round.winner || 'tie').toLowerCase();
+  const metrics =
+    '<div class="round-metric-grid">' +
+      '<div class="round-metric"><div class="metric-label">Winner</div><div class="metric-note">' + winnerTag(winner) + '</div></div>' +
+      '<div class="round-metric"><div class="metric-label">Consensus</div><div class="metric-note">' + escapeHtml(round.llm_judge_consensus_status || '--') + '</div></div>' +
+      '<div class="round-metric"><div class="metric-label">Consensus round</div><div class="metric-note">' + escapeHtml(round.llm_judge_consensus_round || '--') + '</div></div>' +
+      '<div class="round-metric"><div class="metric-label">Exit</div><div class="metric-note">' + escapeHtml(round.challenger_exit_reason || '--') + '</div></div>' +
+    '</div>';
+  return '<div class="round-card">' +
+    '<div>' + metrics + '<div class="metric-label">Task Summary</div><div class="note-text">' + escapeHtml(round.task_summary || round.task_title || '[NO TASK SUMMARY]') + '</div><div class="metric-label">Consensus Rationale</div><div class="note-text">' + escapeHtml(note) + '</div>' + judgeDecisionBlocks(round) + '<div class="copy-row">' + copyButton(roundNoteText(duelId, round, index), 'Copy Note') + '</div></div>' +
+    '<div><div class="metric-label">Task ID</div>' + taskCodeButton(task) + '<div class="metric-label artifact-heading">Public Artifacts</div><div class="artifact-grid">' + artifactLinks(duelId, task) + '</div></div>' +
+  '</div>';
+}
+
+function findPageForDuel(id) {
+  const wanted = idText(id);
+  const index = filteredDuels.findIndex((duel) => idText(duel.duel_id) === wanted);
+  return index >= 0 ? Math.floor(index / PAGE_SIZE) + 1 : currentPage;
+}
+
+function expandDuel(id) {
+  const wanted = idText(id);
+  if (!wanted) return;
+  expandedDuelId = expandedDuelId === wanted ? '' : wanted;
+  selectedRoundKey = '';
+  if (expandedDuelId) currentPage = findPageForDuel(expandedDuelId);
+  renderTable();
+}
+
+function expandRound(key) {
+  selectedRoundKey = selectedRoundKey === key ? '' : key;
+  renderTable();
+}
+
+async function copyText(value) {
+  if (!value) return false;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+  } catch (_) {
+    // Fall through to the legacy path.
+  }
+  try {
+    const input = document.createElement('textarea');
+    input.value = value;
+    input.setAttribute('readonly', '');
+    input.style.position = 'fixed';
+    input.style.left = '-9999px';
+    document.body.appendChild(input);
+    input.select();
+    const ok = document.execCommand('copy');
+    input.remove();
+    return ok;
+  } catch (_) {
+    return false;
+  }
+}
+
+document.addEventListener('click', async (event) => {
+  const copy = event.target.closest('.copy-btn, .task-code');
+  if (copy) {
+    event.preventDefault();
+    event.stopPropagation();
+    const original = copy.textContent;
+    const ok = await copyText(copyStore.get(copy.dataset.copyId) || '');
+    if (!copy.classList.contains('task-code')) {
+      copy.textContent = ok ? 'COPIED' : 'COPY?';
+    }
+    copy.classList.toggle('copied', ok);
+    copy.classList.toggle('failed', !ok);
+    clearTimeout(copy._copyTimer);
+    copy._copyTimer = setTimeout(() => {
+      if (!copy.classList.contains('task-code')) {
+        copy.textContent = original || 'Copy';
+      }
+      copy.classList.remove('copied', 'failed');
+    }, 1200);
+    return;
+  }
+
+  const link = event.target.closest('a');
+  if (link && !link.dataset.duelLink) return;
+  if (link && link.dataset.duelLink) {
+    event.preventDefault();
+    event.stopPropagation();
+    expandDuel(link.dataset.duelLink);
+    return;
+  }
+
+  const round = event.target.closest('.round-row');
+  if (round) {
+    expandRound(round.dataset.roundKey);
+    return;
+  }
+
+  const duel = event.target.closest('.duel-row');
+  if (duel) expandDuel(duel.dataset.duelId);
+});
+
+document.addEventListener('pointerover', (event) => {
+  const target = event.target.closest('[data-tooltip]');
+  if (target) showTooltip(target, event);
+});
+
+document.addEventListener('pointermove', (event) => {
+  if (tooltipTargetEl) placeTooltip(tooltipTargetEl, event);
+});
+
+document.addEventListener('pointerout', (event) => {
+  const target = event.target.closest('[data-tooltip]');
+  if (!target || target.contains(event.relatedTarget)) return;
+  hideTooltip(target);
+});
+
+document.addEventListener('focusin', (event) => {
+  const target = event.target.closest('[data-tooltip]');
+  if (target) showTooltip(target);
+});
+
+document.addEventListener('focusout', (event) => {
+  hideTooltip(event.target.closest('[data-tooltip]'));
+});
+
+$('prev-page').addEventListener('click', () => {
+  currentPage = clamp(currentPage - 1, 1, totalPages());
+  expandedDuelId = '';
+  selectedRoundKey = '';
+  renderTable();
+});
+
+$('next-page').addEventListener('click', () => {
+  currentPage = clamp(currentPage + 1, 1, totalPages());
+  expandedDuelId = '';
+  selectedRoundKey = '';
+  renderTable();
+});
+
+$('search-input').addEventListener('input', () => {
+  currentPage = 1;
+  expandedDuelId = '';
+  selectedRoundKey = '';
+  renderTable();
+});
+
+async function init() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const requestedDuel = idText(params.get('duel'));
+    const requestedPage = Number(params.get('page'));
+    const response = await fetch(INDEX_URL, { cache: 'no-store' });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    indexPayload = await response.json();
+    allDuels = sortDuels(indexPayload && indexPayload.duels);
+    filteredDuels = allDuels.slice();
+    currentPage = Number.isFinite(requestedPage) && requestedPage > 0 ? Math.floor(requestedPage) : 1;
+    if (requestedDuel) {
+      expandedDuelId = requestedDuel;
+      currentPage = findPageForDuel(requestedDuel);
+    }
+    setStatus('LIVE', true);
+    renderStats();
+    renderTable();
+  } catch (error) {
+    setStatus('ERROR', false);
+    $('duel-panel').className = 'card';
+    $('duel-panel').innerHTML = '<div class="error-box">[DUEL INDEX UNAVAILABLE] ' + escapeHtml(error.message || '') + '</div>';
+    $('footer-status').textContent = '[ERROR] DUEL INDEX UNAVAILABLE';
+  }
+}
+
+const THEME_STORAGE_KEY = 'ninja66_theme';
+const THEME_MEDIA_QUERY = '(prefers-color-scheme: dark)';
+
+function savedTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    return saved === 'light' || saved === 'dark' ? saved : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function storeTheme(theme) {
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch (_) {
+    // Theme still changes for this session if storage is unavailable.
+  }
+}
+
+function systemTheme(mediaQuery) {
+  return mediaQuery && mediaQuery.matches ? 'dark' : 'light';
+}
+
+function syncThemeButton() {
+  $('theme-toggle').textContent = document.documentElement.dataset.theme === 'dark' ? 'Light' : 'Dark';
+}
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  syncThemeButton();
+}
+
+function initTheme() {
+  const saved = savedTheme();
+  const mediaQuery = window.matchMedia ? window.matchMedia(THEME_MEDIA_QUERY) : null;
+  applyTheme(saved || systemTheme(mediaQuery));
+
+  if (!saved && mediaQuery) {
+    const handleSystemThemeChange = (event) => {
+      if (!savedTheme()) applyTheme(systemTheme(event));
+    };
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleSystemThemeChange);
+    } else if (typeof mediaQuery.addListener === 'function') {
+      mediaQuery.addListener(handleSystemThemeChange);
+    }
+  }
+}
+
+$('theme-toggle').addEventListener('click', () => {
+  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  storeTheme(next);
+});
+
+initTheme();
+init();
+</script>
+</body>
+</html>

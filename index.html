@@ -1,0 +1,2292 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+<title>NINJA 66</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@400;600;700&family=Space+Grotesk:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: dark;
+  --black: #000000;
+  --surface: #111111;
+  --surface-raised: #1a1a1a;
+  --border: #222222;
+  --border-visible: #333333;
+  --text-disabled: #666666;
+  --text-secondary: #999999;
+  --text-primary: #e8e8e8;
+  --text-display: #ffffff;
+  --accent: #d71921;
+  --success: #4a9e5c;
+  --warning: #d4a843;
+  --interactive: #5b9bf6;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 18px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 40px;
+  --font-display: "Doto", "Space Mono", monospace;
+  --font-body: "Space Grotesk", system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, monospace;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --black: #f5f5f5;
+  --surface: #ffffff;
+  --surface-raised: #f0f0f0;
+  --border: #e8e8e8;
+  --border-visible: #cccccc;
+  --text-disabled: #999999;
+  --text-secondary: #666666;
+  --text-primary: #1a1a1a;
+  --text-display: #000000;
+  --interactive: #007aff;
+}
+
+* { box-sizing: border-box; }
+html {
+  height: 100%;
+  background: var(--black);
+}
+body {
+  margin: 0;
+  min-height: 100%;
+  overflow-y: auto;
+  background: var(--black);
+  color: var(--text-primary);
+  font: 400 14px/1.5 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a { color: var(--text-display); text-decoration: none; }
+a:hover { color: var(--interactive); }
+button {
+  border: 1px solid var(--border-visible);
+  background: transparent;
+  color: var(--text-primary);
+  font: 700 11px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+button:hover { border-color: var(--text-display); color: var(--text-display); }
+button:disabled { cursor: default; opacity: 0.45; }
+
+.page {
+  width: min(1640px, 100%);
+  margin: 0 auto;
+  padding: 20px 24px 28px;
+}
+.topline {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-md);
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  min-width: 0;
+  color: var(--text-display);
+}
+.brand:hover .brand-word { color: var(--interactive); }
+.brand img { width: 36px; height: 36px; object-fit: contain; }
+.brand-word {
+  font: 700 13px/1 var(--font-mono);
+  letter-spacing: 0.18em;
+  color: var(--text-display);
+}
+.meta-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px 14px;
+  color: var(--text-secondary);
+  font: 400 11px/1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.meta-strip b { color: var(--text-display); font-weight: 400; }
+.meta-strip .micro {
+  color: var(--text-disabled);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+.meta-strip .micro b {
+  color: var(--text-secondary);
+}
+.actions { display: flex; align-items: center; gap: var(--space-sm); }
+
+.hero {
+  margin-bottom: var(--space-lg);
+  padding: 10px 12px 8px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-visible);
+  background: var(--surface);
+}
+.hero-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: 8px;
+}
+.eyebrow {
+  color: var(--text-secondary);
+  font: 700 11px/1.2 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.hero-sub {
+  max-width: none;
+  color: var(--text-secondary);
+  font: 400 11px/1.35 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-align: right;
+  text-transform: uppercase;
+}
+.hero-sub strong { color: var(--text-primary); font-weight: 500; }
+.hero-body { min-width: 0; }
+.hero-table-wrap {
+  overflow: auto;
+  scrollbar-color: var(--border-visible) transparent;
+  scrollbar-width: thin;
+}
+.hero-table {
+  width: 100%;
+  min-width: 700px;
+  table-layout: fixed;
+}
+.hero-table th,
+.hero-table td {
+  height: 30px;
+  padding: 4px 5px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  font: 400 10px/1.2 var(--font-mono);
+  text-align: left;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.hero-table th {
+  color: var(--text-secondary);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.hero-table tr:last-child td { border-bottom: 0; }
+.hero-table tbody tr:hover td { background: var(--surface-raised); }
+.hero-table .slot-col,
+.hero-table .uid-col,
+.hero-table .metric-col {
+  font-variant-numeric: tabular-nums;
+}
+.hero-table .slot-col,
+.hero-table .uid-col,
+.hero-table .metric-col {
+  text-align: right;
+}
+.hero-table .repo-col a,
+.hero-table .key-cell .copy-wrap,
+.hero-table .key-cell .copy-link,
+.hero-table .key-cell span:first-child {
+  max-width: 100%;
+  min-width: 0;
+}
+.hero-table .repo-col a,
+.hero-table .key-cell .copy-link,
+.hero-table .key-cell span:first-child {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+  white-space: nowrap;
+}
+.hero-table .copy-btn {
+  padding: 2px 5px;
+  font-size: 8px;
+}
+.hero-status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px 16px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  color: var(--text-secondary);
+  font: 400 10px/1.3 var(--font-mono);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.hero-status-strip b {
+  color: var(--text-primary);
+  font-weight: 400;
+}
+.stat-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 0;
+}
+.stat-row .label {
+  color: var(--text-secondary);
+  font: 400 10px/1.2 var(--font-mono);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.stat-row .value {
+  color: var(--text-display);
+  font: 400 clamp(10px, 0.76vw, 12px)/1.25 var(--font-mono);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.stat-row .copy-wrap {
+  max-width: 100%;
+  min-width: 0;
+}
+.stat-row .copy-link,
+.stat-row .copy-wrap span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.status-ok { color: var(--success) !important; }
+.status-warn { color: var(--warning) !important; }
+.status-bad { color: var(--accent) !important; }
+
+.section {
+  margin-top: var(--space-lg);
+}
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: 6px;
+}
+.section-title {
+  color: var(--text-secondary);
+  font: 700 11px/1.2 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.section-title strong {
+  color: var(--text-display);
+  font-weight: 700;
+}
+.section-title .micro-subtitle {
+  color: var(--text-disabled);
+  display: inline-block;
+  font: 400 9px/1.2 var(--font-mono);
+  letter-spacing: 0.06em;
+  margin-left: 8px;
+  text-transform: none;
+}
+.section-title .micro-subtitle b {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+.section-meta {
+  color: var(--text-secondary);
+  font: 400 11px/1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-align: right;
+  text-transform: uppercase;
+}
+.section-meta .micro {
+  color: var(--text-disabled);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+}
+.section-meta .micro b {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+.history-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.history-search {
+  width: min(340px, 42vw);
+  min-width: 180px;
+  border: 1px solid var(--border-visible);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text-display);
+  padding: 6px 8px;
+  font: 400 11px/1.2 var(--font-mono);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.history-search::placeholder {
+  color: var(--text-disabled);
+}
+.history-search:focus {
+  border-color: var(--interactive);
+  outline: 0;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-sm);
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  min-width: 0;
+}
+.card.tight { padding: 10px; }
+.span-3 { grid-column: span 3; }
+.span-4 { grid-column: span 4; }
+.span-5 { grid-column: span 5; }
+.span-6 { grid-column: span 6; }
+.span-7 { grid-column: span 7; }
+.span-8 { grid-column: span 8; }
+.span-12 { grid-column: 1 / -1; }
+
+.metric-label {
+  color: var(--text-secondary);
+  font: 700 11px/1.2 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.metric-value {
+  margin-top: 4px;
+  color: var(--text-display);
+  font: 400 clamp(22px, 2.6vw, 38px)/1 var(--font-mono);
+  letter-spacing: -0.04em;
+}
+.metric-note {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font: 400 11px/1.25 var(--font-mono);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.race-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(132px, auto) minmax(0, 1fr);
+  gap: var(--space-md);
+  align-items: center;
+}
+.combatant {
+  min-width: 0;
+}
+.combatant--king {
+  text-align: left;
+}
+.combatant--challenger {
+  text-align: right;
+}
+.combatant .repo {
+  color: var(--text-display);
+  font-size: clamp(20px, 2.35vw, 32px);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.combatant .repo a {
+  display: inline-block;
+  max-width: 100%;
+  color: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+  white-space: nowrap;
+}
+.combatant .detail {
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font: 400 11px/1.3 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.score-box {
+  justify-self: center;
+  min-width: 132px;
+  text-align: center;
+}
+.score-line {
+  color: var(--text-display);
+  font: 400 36px/1 var(--font-mono);
+  letter-spacing: -0.06em;
+}
+.score-line .king { color: var(--success); }
+.score-line .challenger { color: var(--accent); }
+.score-caption {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font: 700 11px/1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.segment-bar {
+  display: grid;
+  grid-template-columns: repeat(var(--segments, 50), minmax(4px, 1fr));
+  gap: 2px;
+  margin-top: var(--space-sm);
+}
+.segment {
+  height: 9px;
+  background: var(--border-visible);
+}
+.segment.king { background: var(--success); }
+.segment.challenger { background: var(--accent); }
+.segment.tie { background: var(--text-disabled); opacity: 0.55; }
+.segment.error { background: var(--warning); }
+.segment.pending { background: var(--border); }
+.table-wrap {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  scrollbar-color: var(--border-visible) transparent;
+  scrollbar-width: thin;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+th, td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+th {
+  color: var(--text-secondary);
+  font: 700 11px/1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+td {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+td.num {
+  font-family: var(--font-mono);
+  text-align: right;
+  white-space: nowrap;
+}
+td.mono {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+tr:last-child td { border-bottom: 0; }
+tbody tr:hover td { background: var(--surface-raised); }
+.data-table {
+  width: max(100%, var(--table-min, 720px));
+  min-width: var(--table-min, 720px);
+  table-layout: fixed;
+}
+.data-table th,
+.data-table td {
+  height: 30px;
+  padding: 5px 8px;
+  overflow: hidden;
+  vertical-align: middle;
+}
+.data-table th {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--surface);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+}
+.data-table td {
+  font-size: 10px;
+  line-height: 1.2;
+}
+.data-table th,
+.data-table td,
+.data-table a,
+.data-table .copy-link {
+  text-overflow: ellipsis;
+}
+.data-table td:not(.num):not(.mono):not(.notes-cell),
+.data-table a,
+.data-table .copy-link {
+  overflow: hidden;
+  white-space: nowrap;
+}
+.data-table .notes-cell {
+  white-space: normal;
+}
+.data-table a,
+.data-table .copy-link {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: bottom;
+}
+.data-table th.num,
+.data-table th.mono {
+  text-align: right;
+}
+.data-table td.num,
+.data-table td.mono {
+  font-variant-numeric: tabular-nums;
+}
+.data-table td.mono {
+  text-align: right;
+}
+.data-table .tag {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 3px 7px;
+  text-overflow: ellipsis;
+}
+.data-table .copy-wrap {
+  max-width: 100%;
+  min-width: 0;
+}
+.data-table .copy-wrap .copy-link,
+.data-table .copy-wrap span:first-child {
+  min-width: 0;
+}
+.data-table .copy-btn,
+.data-table .notes-toggle {
+  flex: 0 0 auto;
+  padding: 2px 5px;
+  font-size: 8px;
+}
+.confirmation-detail {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font: 400 9px/1.25 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: normal;
+}
+.confirmation-detail a {
+  color: var(--text-display);
+}
+.history-table {
+  --table-min: 820px;
+}
+.queue-table {
+  --table-min: 500px;
+}
+.inactive-table {
+  --table-min: 440px;
+}
+#ninja-tooltip {
+  position: fixed;
+  z-index: 9999;
+  max-width: min(360px, 70vw);
+  padding: 5px 7px;
+  border: 1px solid var(--border-visible);
+  border-radius: 4px;
+  background: var(--black);
+  color: var(--text-primary);
+  font: 400 9px/1.3 var(--font-mono);
+  letter-spacing: 0.02em;
+  opacity: 0;
+  pointer-events: none;
+  text-transform: none;
+  transform: translate3d(0, 2px, 0);
+  transition: opacity 80ms linear, transform 80ms linear;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+#ninja-tooltip.visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+.tag {
+  display: inline-block;
+  border: 1px solid var(--border-visible);
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: var(--text-primary);
+  font: 700 11px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.tag.good { color: var(--success); border-color: var(--success); }
+.tag.bad { color: var(--accent); border-color: var(--accent); }
+.tag.warn { color: var(--warning); border-color: var(--warning); }
+.copy-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.copy-link { color: var(--text-display); }
+.copy-link:hover { color: var(--interactive); }
+.duel-link {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 2px 7px;
+  border: 1px solid var(--border-visible);
+  border-radius: 7px;
+  background: var(--surface-raised);
+  color: var(--text-display);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.duel-link:hover {
+  border-color: var(--interactive);
+  color: var(--interactive);
+}
+.copy-btn {
+  border: 1px solid var(--border-visible);
+  background: transparent;
+  color: var(--text-secondary);
+  font: 700 9px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  padding: 4px 6px;
+}
+.copy-btn:hover { color: var(--text-display); border-color: var(--text-display); }
+.copy-btn.copied { color: var(--success); border-color: var(--success); }
+.copy-btn.failed { color: var(--warning); border-color: var(--warning); }
+.data-table th.uid-col,
+.data-table td.uid-col {
+  min-width: var(--uid-col-width, 70px);
+  overflow: visible;
+  text-align: right;
+  white-space: nowrap;
+}
+.data-table .uid-link {
+  max-width: none;
+  min-width: 0;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+  writing-mode: horizontal-tb;
+}
+.data-table .uid-link {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.state-table {
+  --table-min: 560px;
+}
+.state-table .state-identity {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.state-table .state-primary {
+  color: var(--text-display);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.state-table .state-secondary {
+  color: var(--text-secondary);
+  font: 400 9px/1.2 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.state-table .key-cell .copy-wrap {
+  width: 100%;
+  max-width: 100%;
+}
+.state-table .key-cell .copy-link,
+.state-table .key-cell .copy-wrap span:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.state-note {
+  margin-top: 6px;
+}
+.state-stack {
+  display: grid;
+  gap: var(--space-xs);
+}
+#active-duel.card {
+  padding: var(--space-md);
+}
+#active-duel.card {
+  border-color: var(--border);
+  background: linear-gradient(180deg, var(--surface), var(--black));
+}
+.duel-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: var(--space-sm);
+  color: var(--text-secondary);
+  font: 400 10px/1.3 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.duel-context b {
+  color: var(--text-primary);
+  font-weight: 400;
+}
+.duel-status {
+  color: var(--text-primary);
+}
+.mobile-table-title,
+.mobile-only {
+  display: none;
+}
+.fallen-card {
+  overflow: hidden;
+  padding: 0;
+}
+.fallen-list {
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+}
+.fallen-head {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: 76px 58px minmax(0, 1fr);
+  gap: 8px;
+  margin: 0;
+  padding: 6px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font: 700 9px/1.2 var(--font-mono);
+  letter-spacing: 0.06em;
+  box-shadow: 0 8px 12px var(--surface);
+  text-transform: uppercase;
+}
+.fallen-head span:nth-child(2) {
+  text-align: right;
+}
+.fallen-list-wrap {
+  isolation: isolate;
+  position: relative;
+  max-height: min(32vh, 300px);
+  overflow: auto;
+  background: var(--surface);
+  scrollbar-color: var(--border-visible) transparent;
+  scrollbar-width: thin;
+}
+.fallen-item {
+  display: grid;
+  grid-template-columns: 76px 58px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.fallen-item:hover {
+  background: var(--surface-raised);
+}
+.fallen-item .repo-cell {
+  min-width: 0;
+}
+.fallen-item .repo-cell a {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fallen-item .uid-cell {
+  color: var(--text-primary);
+  font: 400 11px/1 var(--font-mono);
+  text-align: right;
+  white-space: nowrap;
+}
+.fallen-item .uid-link {
+  display: inline-block;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+  writing-mode: horizontal-tb;
+}
+.muted { color: var(--text-secondary); }
+.empty, .error-box {
+  padding: var(--space-xl);
+  color: var(--text-secondary);
+  font: 700 12px/1.4 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.error-box {
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 10px;
+  text-align: left;
+}
+.notes-row { display: none; }
+.notes-row.open { display: table-row; }
+.notes-cell {
+  background: var(--black) !important;
+  padding: 0 !important;
+}
+.notes-panel {
+  padding: var(--space-md);
+  border-top: 1px solid var(--border-visible);
+  max-height: min(56vh, 560px);
+  overflow: hidden;
+}
+.notes-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+.notes-panel-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.notes-panel-actions .metric-note {
+  margin-top: 0;
+  line-height: 1;
+}
+.notes-panel-title {
+  color: var(--text-display);
+  font: 700 11px/1.2 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.notes-scroll {
+  max-height: min(44vh, 430px);
+  overflow: auto;
+  padding-right: var(--space-sm);
+  scrollbar-color: var(--border-visible) transparent;
+  scrollbar-width: thin;
+}
+.note {
+  padding: 10px;
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.note:last-child { margin-bottom: 0; }
+.note-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  color: var(--text-secondary);
+  font: 700 11px/1.3 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.note-head-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  min-width: 0;
+}
+.note-copy {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 7px;
+  font-size: 8px;
+}
+.notes-copy-all {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 8px;
+  font-size: 8px;
+}
+.note-text {
+  margin-top: 6px;
+  color: var(--text-primary);
+  font: 400 13px/1.55 var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+#history-panel .table-wrap { max-height: min(54vh, 720px); }
+#queue-panel .table-wrap,
+#inactive-panel .table-wrap {
+  max-height: min(42vh, 460px);
+}
+#queue-panel .table-wrap {
+  max-height: min(30vh, 260px);
+}
+.miners-stack {
+  display: grid;
+  gap: var(--space-sm);
+}
+.panel-title {
+  margin: 0 0 6px;
+  color: var(--text-secondary);
+  font: 700 11px/1.2 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.panel-title strong {
+  color: var(--text-display);
+  font-weight: 700;
+}
+.footer {
+  margin-top: var(--space-xl);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  color: var(--text-secondary);
+  font: 400 11px/1.4 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1100px) {
+  .span-3, .span-4, .span-5, .span-6, .span-7, .span-8 { grid-column: span 6; }
+}
+@media (max-width: 720px) {
+  .page { padding: 14px 10px 24px; }
+  .topline { grid-template-columns: 1fr; margin-bottom: var(--space-md); }
+  .meta-strip { justify-content: flex-start; }
+  .hero { margin-bottom: var(--space-lg); }
+  .hero-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .hero-sub { text-align: left; }
+  .hero-table { min-width: 620px; }
+  .hero-status-strip { justify-content: flex-start; }
+  .hero-sub { font-size: 11px; }
+  .grid { display: block; }
+  .card, .table-wrap { margin-bottom: var(--space-sm); }
+  .race-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+  .combatant--challenger {
+    text-align: left;
+  }
+  .combatant .repo {
+    white-space: normal;
+  }
+  .combatant .repo a {
+    white-space: normal;
+  }
+  .score-box {
+    min-width: 0;
+    text-align: center;
+  }
+  .score-line { font-size: 32px; }
+  .section { margin-top: var(--space-lg); }
+  .section-head { align-items: flex-start; flex-direction: column; }
+  .history-tools {
+    align-items: stretch;
+    width: 100%;
+  }
+  .history-search {
+    width: 100%;
+  }
+  .notes-panel { max-height: 62vh; }
+  .notes-scroll { max-height: 48vh; }
+  .table-wrap {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  .data-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+  .data-table th,
+  .data-table td {
+    height: 28px;
+    padding: 4px 5px;
+  }
+  .data-table th {
+    font-size: 8px;
+    letter-spacing: 0.04em;
+  }
+  .data-table td {
+    font-size: 10px;
+  }
+  .data-table .tag {
+    padding: 3px 5px;
+    font-size: 8px;
+    letter-spacing: 0.04em;
+  }
+  .data-table th.uid-col,
+  .data-table td.uid-col {
+    min-width: 0;
+  }
+  .mobile-table-title {
+    display: block;
+    margin: 0 0 var(--space-sm);
+    color: var(--text-secondary);
+    font: 700 11px/1.2 var(--font-mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .mobile-only {
+    display: inline;
+  }
+  .history-table col:nth-child(5),
+  .history-table col:nth-child(6),
+  .history-table col:nth-child(7),
+  .history-table col:nth-child(8),
+  .history-table col:nth-child(9),
+  .history-table th:nth-child(5),
+  .history-table th:nth-child(6),
+  .history-table th:nth-child(7),
+  .history-table th:nth-child(8),
+  .history-table th:nth-child(9),
+  .history-table tbody > tr:not(.notes-row) > td:nth-child(5),
+  .history-table tbody > tr:not(.notes-row) > td:nth-child(6),
+  .history-table tbody > tr:not(.notes-row) > td:nth-child(7),
+  .history-table tbody > tr:not(.notes-row) > td:nth-child(8),
+  .history-table tbody > tr:not(.notes-row) > td:nth-child(9),
+  .state-table col:nth-child(4),
+  .state-table col:nth-child(5),
+  .state-table th:nth-child(4),
+  .state-table th:nth-child(5),
+  .state-table td:nth-child(4),
+  .state-table td:nth-child(5) {
+    display: none;
+  }
+  .notes-row {
+    display: none !important;
+  }
+  .queue-table col:nth-child(1) { width: 14% !important; }
+  .queue-table col:nth-child(2) { width: 16% !important; }
+  .queue-table col:nth-child(3) { width: 42% !important; }
+  .queue-table col:nth-child(4) { width: 28% !important; }
+  .queue-table th:nth-child(4),
+  .queue-table td:nth-child(4) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .history-table col:nth-child(1) { width: 20% !important; }
+  .history-table col:nth-child(2) { width: 16% !important; }
+  .history-table col:nth-child(3) { width: 44% !important; }
+  .history-table col:nth-child(4) { width: 20% !important; }
+  .duel-link {
+    width: 100%;
+    padding: 2px 4px;
+    font-size: 9px;
+  }
+  .state-table col:nth-child(1) { width: 18% !important; }
+  .state-table col:nth-child(2) { width: 18% !important; }
+  .state-table col:nth-child(3) { width: 64% !important; }
+  .fallen-head,
+  .fallen-item { grid-template-columns: 66px 48px minmax(0, 1fr); }
+  .fallen-item {
+    padding: 5px 6px;
+  }
+  .fallen-item .tag {
+    padding: 3px 6px;
+    font-size: 9px;
+    letter-spacing: 0.04em;
+  }
+}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="topline">
+    <a class="brand" href="https://github.com/unarbos/tau" target="_blank" rel="noreferrer" aria-label="Open the Subnet 66 GitHub repository">
+      <img src="/favicon.png" alt="NINJA">
+      <div class="brand-word">NINJA 66</div>
+    </a>
+    <div class="actions">
+      <div class="meta-strip" id="top-meta">
+        <span>Status <b id="system-status">LOADING</b></span>
+        <span>Updated <b id="updated-at">--</b></span>
+        <span>Validator <b id="validator-stat">--</b></span>
+      </div>
+      <button id="theme-toggle" type="button">Light</button>
+    </div>
+  </header>
+
+  <section class="hero" aria-labelledby="king-heading">
+    <div class="hero-head">
+      <div class="eyebrow" id="king-heading">Kings</div>
+      <div class="hero-sub" id="king-copy">Fetching live subnet state from the local dashboard proxy.</div>
+    </div>
+    <div class="hero-body" id="king-stats">
+      <div class="stat-row"><span class="label">State</span><span class="value">[LOADING]</span></div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="race-heading">
+    <div class="section-head">
+      <div class="section-title" id="race-heading"><strong>Active duel</strong></div>
+      <div class="section-meta" id="race-meta">--</div>
+    </div>
+    <div class="card" id="active-duel">
+      <div class="empty">[LOADING ACTIVE DUEL]</div>
+    </div>
+  </section>
+
+  <section class="section" aria-label="Miner queue">
+    <div class="miners-stack">
+      <div id="queue-panel"></div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="history-heading">
+    <div class="section-head">
+      <div class="section-title" id="history-heading"><strong>Recent duels</strong> / recent dethrones <span id="history-dethrone-stat">--</span></div>
+      <div class="section-meta history-tools">
+        <input class="history-search" id="history-search" type="search" placeholder="Search duel, UID, hotkey, repo" aria-label="Search recent duel history">
+        <span id="history-meta">--</span>
+      </div>
+    </div>
+    <div id="history-panel"></div>
+  </section>
+
+  <section class="section" aria-label="Fallen miners">
+    <div class="state-stack">
+      <div id="inactive-panel"></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span id="footer-status">[LOADING]</span>
+    <span>Data route <a href="./dashboard-summary.json">./dashboard-summary.json</a></span>
+    <span>Duel archive <a id="duels-link" href="./duels.html">./duels.html</a></span>
+    <span><a href="https://taomarketcap.com/subnets/66/miners" target="_blank" rel="noreferrer">SUBNET 66</a> | <a href="https://github.com/unarbos/tau" target="_blank" rel="noreferrer">Validator</a> | <a href="https://github.com/unarbos/ninja" target="_blank" rel="noreferrer">Miner</a></span>
+  </footer>
+</main>
+
+<script>
+const DATA_URLS = ['./dashboard-summary.json', './dashboard.json'];
+const POLL_MS = 15_000;
+const MAIN_REPO_URL = 'https://github.com/unarbos/ninja';
+const noteCache = new Map();
+const openNotes = new Set();
+let lastData = null;
+let retryTimer = null;
+let historySearchQuery = '';
+
+const $ = (id) => document.getElementById(id);
+const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+const arr = (value) => Array.isArray(value) ? value : [];
+
+function roundCount(duel) {
+  const rounds = arr(duel && duel.rounds);
+  if (rounds.length) return rounds.length;
+  const count = Number(duel && duel.round_count);
+  return Number.isFinite(count) && count >= 0 ? count : 0;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[char]));
+}
+
+function safeHref(value, fallback) {
+  const text = String(value || fallback || '#');
+  if (text === '#') return '#';
+  try {
+    const url = new URL(text, window.location.href);
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : '#';
+  } catch (_) {
+    return '#';
+  }
+}
+
+function tipAttrs(label) {
+  if (!label) return '';
+  const safe = escapeHtml(label);
+  return ' class="tip" data-tooltip="' + safe + '" aria-label="' + safe + '"';
+}
+
+function compactRepo(repo) {
+  if (!repo) return 'UNKNOWN';
+  return String(repo).split('/')[0] || String(repo);
+}
+
+function repoLink(repo, url, compact, noTooltip) {
+  if (!repo) return '<span class="muted">UNKNOWN</span>';
+  const href = url || 'https://github.com/' + repo;
+  const attrs = noTooltip ? '' : tipAttrs(repo);
+  return '<a' + attrs + ' href="' + safeHref(href, '#') + '" target="_blank" rel="noreferrer">' + escapeHtml(compact ? compactRepo(repo) : repo) + '</a>';
+}
+
+function shortHash(value) {
+  if (!value) return '--';
+  const text = String(value);
+  return text.length > 14 ? text.slice(0, 7) + '..' + text.slice(-5) : text;
+}
+
+function copyValue(value, href) {
+  if (!value) return '<span class="muted">--</span>';
+  const text = String(value);
+  const link = href ? '<a class="copy-link" href="' + safeHref(href, '#') + '" target="_blank" rel="noreferrer">' + escapeHtml(shortHash(text)) + '</a>' : '<span>' + escapeHtml(shortHash(text)) + '</span>';
+  return '<span class="copy-wrap">' + link + '<button class="copy-btn" type="button" data-copy="' + escapeHtml(text) + '" aria-label="Copy ' + escapeHtml(shortHash(text)) + '">COPY</button></span>';
+}
+
+function hotkeyUrl(hotkey, netuid) {
+  if (!hotkey) return '';
+  return 'https://taomarketcap.com/subnets/' + encodeURIComponent(netuid || 66) + '/miners?query=' + encodeURIComponent(hotkey);
+}
+
+function hotkeyLink(hotkey, netuid) {
+  if (!hotkey) return '<span class="muted">--</span>';
+  return '<a class="copy-link tip" data-tooltip="' + escapeHtml(hotkey) + '" aria-label="' + escapeHtml(hotkey) + '" href="' + safeHref(hotkeyUrl(hotkey, netuid), '#') + '" target="_blank" rel="noreferrer">' + escapeHtml(shortHash(hotkey)) + '</a>';
+}
+
+function commitLink(item) {
+  const sha = item && item.commit_sha;
+  if (!sha) return '<span class="muted">--</span>';
+  return '<a class="copy-link tip" data-tooltip="' + escapeHtml(sha) + '" aria-label="' + escapeHtml(sha) + '" href="' + safeHref(commitUrl(item), '#') + '" target="_blank" rel="noreferrer">' + escapeHtml(shortHash(sha)) + '</a>';
+}
+
+function uidCell(uid, hotkey, netuid) {
+  const label = uid ?? '--';
+  if (!hotkey) return '<span class="uid-link">' + escapeHtml(label) + '</span>';
+  return '<a class="tip uid-link" data-tooltip="' + escapeHtml(hotkey) + '" aria-label="' + escapeHtml(hotkey) + '" href="' + safeHref(hotkeyUrl(hotkey, netuid), '#') + '" target="_blank" rel="noreferrer">' + escapeHtml(label) + '</a>';
+}
+
+function repoName(item) {
+  return item.repo_full_name || item.repo || '';
+}
+
+function commitUrl(item) {
+  if (item.pr_url) return item.pr_url;
+  const repo = repoName(item);
+  if (repo && item.commit_sha) return 'https://github.com/' + repo + '/commit/' + encodeURIComponent(item.commit_sha);
+  return item.repo_url || '';
+}
+
+function pct(value, digits = 1) {
+  return Number.isFinite(Number(value)) ? (Number(value) * 100).toFixed(digits) + '%' : '--';
+}
+
+function dashboardLink(data, key, fallback) {
+  const links = (data && data.links) || (data && data.status && data.status.links) || {};
+  return links && links[key] ? String(links[key]) : fallback;
+}
+
+function num(value) {
+  return Number.isFinite(Number(value)) ? Number(value).toLocaleString() : '--';
+}
+
+function duelErrorCount(duel) {
+  return Number((duel && duel.errors) || 0);
+}
+
+function duelResultLabel(duel) {
+  return duelErrorCount(duel) > 0 ? 'K/T/E/C' : 'K/T/C';
+}
+
+function duelResultHtml(duel) {
+  const losses = '<span class="status-ok">' + num(duel.losses) + '</span>';
+  const ties = num(duel.ties);
+  const wins = '<span class="status-bad">' + num(duel.wins) + '</span>';
+  const errors = duelErrorCount(duel);
+  if (errors > 0) return losses + '/' + ties + '/<span class="status-warn">' + num(errors) + '</span>/' + wins;
+  return losses + '/' + ties + '/' + wins;
+}
+
+function ago(iso) {
+  if (!iso) return '--';
+  const time = new Date(iso).getTime();
+  if (!Number.isFinite(time)) return '--';
+  const diff = Math.max(0, Date.now() - time);
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'NOW';
+  if (mins < 60) return mins + 'M AGO';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'H ' + (mins % 60) + 'M AGO';
+  const days = Math.floor(hrs / 24);
+  return days + 'D ' + (hrs % 24) + 'H AGO';
+}
+
+function mean(values) {
+  const clean = values.map(Number).filter(Number.isFinite);
+  if (!clean.length) return null;
+  return clean.reduce((sum, value) => sum + value, 0) / clean.length;
+}
+
+function decisiveThreshold(wins, losses, fallback, margin) {
+  if (Number.isFinite(Number(fallback))) return Number(fallback);
+  return losses + Math.max(0, Number(margin) || 0) + 1;
+}
+
+function activeResultLabel(active) {
+  return 'K / T / C';
+}
+
+function activeResultHtml(active, losses, ties, wins) {
+  return '<span class="king">' + losses + '</span> / ' + ties + ' / <span class="challenger">' + wins + '</span>';
+}
+
+function activeScoredRoundCount(active, wins, losses, ties) {
+  const rounds = arr(active && active.rounds);
+  if (rounds.length) return rounds.length;
+  const errors = Number((active && active.errors) || 0);
+  return wins + losses + ties + (Number.isFinite(errors) ? errors : 0);
+}
+
+function activeNeedStatus(active, wins, losses, ties, totalRounds, threshold) {
+  const scored = activeScoredRoundCount(active, wins, losses, ties);
+  if (!Number.isFinite(scored) || !Number.isFinite(totalRounds) || !Number.isFinite(threshold) || scored > totalRounds) return null;
+  const remaining = Math.max(0, totalRounds - scored);
+  const requiredNetWins = threshold - wins;
+  if (remaining === 0) {
+    return requiredNetWins <= 0
+      ? { text: 'Challenger won set', cls: 'status-ok' }
+      : { text: 'King defended set', cls: 'status-bad' };
+  }
+  if (requiredNetWins <= -remaining) {
+    return { text: 'Challenger clinched set', cls: 'status-ok' };
+  }
+  if (requiredNetWins > remaining) {
+    return { text: 'King mathematically safe', cls: 'status-bad' };
+  }
+  if (requiredNetWins <= 0) {
+    return { text: 'Challenger ahead; not clinched', cls: 'status-warn' };
+  }
+  return {
+    text: 'Challenger needs ' + requiredNetWins + ' of ' + remaining + ' remaining',
+    cls: 'status-warn'
+  };
+}
+
+function recentDethronesSummary(data) {
+  const recent = arr(data && data.duels).slice(-80);
+  const replaced = recent.filter((duel) => duel.king_replaced).length;
+  return { replaced, total: recent.length };
+}
+
+let tooltipEl = null;
+let tooltipTargetEl = null;
+
+function tooltipElement() {
+  if (tooltipEl) return tooltipEl;
+  tooltipEl = document.createElement('div');
+  tooltipEl.id = 'ninja-tooltip';
+  tooltipEl.setAttribute('role', 'tooltip');
+  document.body.appendChild(tooltipEl);
+  return tooltipEl;
+}
+
+function placeTooltip(target, pointer) {
+  const tip = tooltipElement();
+  const rect = target.getBoundingClientRect();
+  const margin = 8;
+  const x = pointer ? pointer.clientX : rect.left + rect.width / 2;
+  const preferredY = pointer ? pointer.clientY : rect.top;
+  const tipRect = tip.getBoundingClientRect();
+  const left = clamp(x - tipRect.width / 2, margin, window.innerWidth - tipRect.width - margin);
+  let top = preferredY - tipRect.height - 12;
+  if (top < margin) top = rect.bottom + 10;
+  tip.style.left = left + 'px';
+  tip.style.top = clamp(top, margin, window.innerHeight - tipRect.height - margin) + 'px';
+}
+
+function showTooltip(target, pointer) {
+  const label = target && target.dataset ? target.dataset.tooltip : '';
+  if (!label) return;
+  const tip = tooltipElement();
+  tooltipTargetEl = target;
+  tip.textContent = label;
+  tip.classList.add('visible');
+  placeTooltip(target, pointer);
+}
+
+function hideTooltip(target) {
+  if (target && tooltipTargetEl && target !== tooltipTargetEl) return;
+  tooltipTargetEl = null;
+  if (tooltipEl) tooltipEl.classList.remove('visible');
+}
+
+document.addEventListener('pointerover', (event) => {
+  const target = event.target.closest('[data-tooltip]');
+  if (target) showTooltip(target, event);
+});
+
+document.addEventListener('pointermove', (event) => {
+  if (tooltipTargetEl) placeTooltip(tooltipTargetEl, event);
+});
+
+document.addEventListener('pointerout', (event) => {
+  const target = event.target.closest('[data-tooltip]');
+  if (!target || target.contains(event.relatedTarget)) return;
+  hideTooltip(target);
+});
+
+document.addEventListener('focusin', (event) => {
+  const target = event.target.closest('[data-tooltip]');
+  if (target) showTooltip(target);
+});
+
+document.addEventListener('focusout', (event) => {
+  hideTooltip(event.target.closest('[data-tooltip]'));
+});
+
+function buildSegments(rounds, total) {
+  const limit = clamp(Number(total) || 50, 1, 100);
+  let html = '';
+  for (let i = 0; i < limit; i += 1) {
+    const round = rounds[i];
+    const winner = round ? String(round.winner || 'tie') : 'pending';
+    const cls = winner === 'king' ? 'king' : winner === 'challenger' ? 'challenger' : winner === 'error' ? 'error' : winner === 'pending' ? 'pending' : 'tie';
+    const label = round ? escapeHtml((round.task_name || 'round') + ' - ' + winner) : 'pending';
+    html += '<span class="segment ' + cls + '" data-tooltip="' + label + '" aria-label="' + label + '"></span>';
+  }
+  return '<div class="segment-bar" style="--segments:' + limit + '">' + html + '</div>';
+}
+
+function renderStat(label, value, cls) {
+  return '<div class="stat-row"><span class="label">' + escapeHtml(label) + '</span><span class="value ' + (cls || '') + '">' + value + '</span></div>';
+}
+
+function renderHeroKingRow(item, index, featured, status, metrics) {
+  const isFeatured = sameMiner(item, featured);
+  const metric = metrics.get(item) || {};
+  return '<tr class="' + (isFeatured ? 'is-current' : '') + '">' +
+    '<td class="num slot-col">' + String(index + 1).padStart(2, '0') + '</td>' +
+    '<td class="num uid-col">' + uidCell(item.uid, item.hotkey, status.netuid) + '</td>' +
+    '<td class="repo-col">' + repoLink(repoName(item), item.pr_url || item.repo_url, true) + '</td>' +
+    '<td class="mono key-cell">' + hotkeyLink(item.hotkey, status.netuid) + '</td>' +
+    '<td class="mono key-cell">' + commitLink(item) + '</td>' +
+    '<td class="mono metric-col">' + escapeHtml(metric.defenses) + '</td>' +
+    '<td class="mono metric-col">' + escapeHtml(metric.holding) + '</td>' +
+  '</tr>';
+}
+
+function emissionKings(status, currentKing) {
+  const recent = arr(status.recent_kings).filter(Boolean);
+  if (recent.length) return recent;
+  return currentKing ? [{ ...currentKing, share: 1 }] : [];
+}
+
+function expectedKingSlots(kings) {
+  const shares = kings.map((king) => Number(king.share)).filter((share) => share > 0);
+  if (!shares.length) return kings.length;
+  return Math.max(kings.length, Math.round(1 / Math.max(...shares)));
+}
+
+function equalShareCopy(kings) {
+  const expected = expectedKingSlots(kings);
+  const shares = kings.map((king) => Number(king.share)).filter((share) => Number.isFinite(share));
+  const equal = shares.length > 1 && shares.every((share) => Math.abs(share - shares[0]) < 0.000001);
+  if (shares.length === 1) return kings.length + ' slot' + (kings.length === 1 ? '' : 's') + ' · ' + pct(shares[0], 0);
+  if (equal && expected > 1) return expected + ' slots · ' + pct(shares[0], 0) + ' each';
+  if (shares.length) return kings.length + ' slots · variable share';
+  return kings.length + ' slot' + (kings.length === 1 ? '' : 's');
+}
+
+function timestampMs(value) {
+  if (!value) return null;
+  const time = new Date(value).getTime();
+  return Number.isFinite(time) ? time : null;
+}
+
+function kingTimestamp(item) {
+  const fields = ['king_since', 'throne_since', 'reign_since', 'since', 'started_at', 'first_seen_at', 'created_at'];
+  for (const field of fields) {
+    const time = timestampMs(item && item[field]);
+    if (time != null) return time;
+  }
+  return null;
+}
+
+function sameMiner(a, b) {
+  if (!a || !b) return false;
+  const aUid = a.uid ?? a.king_uid ?? a.challenger_uid;
+  const bUid = b.uid ?? b.king_uid ?? b.challenger_uid;
+  if (aUid != null && bUid != null && String(aUid) === String(bUid)) return true;
+  const aHotkey = a.hotkey || a.king_hotkey || a.challenger_hotkey;
+  const bHotkey = b.hotkey || b.king_hotkey || b.challenger_hotkey;
+  if (aHotkey && bHotkey && String(aHotkey) === String(bHotkey)) return true;
+  const aRepo = repoName(a) || a.king_repo || a.challenger_repo;
+  const bRepo = repoName(b) || b.king_repo || b.challenger_repo;
+  return !!aRepo && !!bRepo && String(aRepo) === String(bRepo);
+}
+
+function kingDuelRef(duel) {
+  const before = duel && (duel.king_before || duel.king);
+  return {
+    uid: (before && before.uid) ?? duel.king_uid,
+    hotkey: (before && before.hotkey) ?? duel.king_hotkey,
+    repo: (before && (before.repo_full_name || before.repo)) ?? duel.king_repo
+  };
+}
+
+function kingDefenseDuel(duel) {
+  if (!duel || duel.king_replaced || duel.disqualification_reason) return false;
+  if (duel.confirmation_of_duel_id != null || duel.task_set_phase === 'confirmation_retest') return false;
+  return true;
+}
+
+function compactAge(iso) {
+  const label = ago(iso);
+  return label.endsWith(' AGO') ? label.slice(0, -4) : label;
+}
+
+function rowHoldingLabel(item, status, currentKing, duels) {
+  if (sameMiner(item, currentKing) && status.king_since) return compactAge(status.king_since);
+  const stamped = kingTimestamp(item);
+  if (stamped != null) return compactAge(new Date(stamped).toISOString());
+  const appearances = arr(duels)
+    .filter((duel) => sameMiner(item, kingDuelRef(duel)))
+    .map((duel) => timestampMs(duel.started_at || duel.finished_at))
+    .filter((time) => time != null);
+  return appearances.length ? compactAge(new Date(Math.min(...appearances)).toISOString()) : '--';
+}
+
+function heroKingMetrics(data, kings) {
+  const status = data.status || {};
+  const duels = arr(data.duels);
+  const metrics = new Map();
+  for (const king of kings) {
+    const defenses = duels.filter((duel) => kingDefenseDuel(duel) && sameMiner(king, kingDuelRef(duel))).length;
+    metrics.set(king, {
+      defenses: num(defenses),
+      holding: rowHoldingLabel(king, status, data.current_king, duels)
+    });
+  }
+  return metrics;
+}
+
+function chooseHeroKing(kings, data) {
+  if (data.current_king) {
+    const current = kings.find((king) => sameMiner(king, data.current_king));
+    return { king: current || data.current_king, time: kingTimestamp(current || data.current_king), source: 'current king' };
+  }
+
+  const stamped = kings.map((king) => ({ king, time: kingTimestamp(king), source: 'published reign' }))
+    .filter((item) => item.time != null)
+    .sort((a, b) => a.time - b.time);
+  if (stamped.length) return stamped[0];
+
+  const duels = arr(data.duels);
+  const inferred = kings.map((king) => {
+    const appearances = duels
+      .filter((duel) => sameMiner(king, { uid: duel.king_uid, hotkey: duel.king_hotkey, repo: duel.king_repo }))
+      .map((duel) => timestampMs(duel.started_at || duel.finished_at))
+      .filter((time) => time != null);
+    return appearances.length ? { king, time: Math.min(...appearances), source: 'duel history' } : null;
+  }).filter(Boolean).sort((a, b) => a.time - b.time);
+  return inferred[0] || { king: data.current_king || kings[0], time: null, source: 'current king set' };
+}
+
+function renderShellError(message) {
+  $('system-status').textContent = 'ERROR';
+  $('system-status').className = 'status-bad';
+  $('footer-status').textContent = '[ERROR] ' + message;
+  $('king-heading').textContent = 'Kings';
+  $('king-copy').textContent = 'The dashboard proxy did not return usable JSON. Polling will retry.';
+  $('king-stats').innerHTML = '<div class="error-box">[ERROR] ' + escapeHtml(message) + '</div>';
+}
+
+function renderKing(data) {
+  const status = data.status || {};
+  const king = data.current_king;
+  const kings = emissionKings(status, king);
+  if (!kings.length) {
+    $('king-heading').textContent = 'Kings';
+    $('king-copy').textContent = 'No active king set is present in the latest dashboard payload.';
+    $('king-stats').innerHTML = renderStat('Kings', 'EMPTY', 'status-warn');
+    return;
+  }
+  const hero = chooseHeroKing(kings, data);
+  const featured = hero.king;
+  const expectedSlots = expectedKingSlots(kings);
+  const slotSummary = equalShareCopy(kings);
+  const metrics = heroKingMetrics(data, kings);
+  const slotRows = kings.slice(0, expectedSlots || 20).map((item, index) => renderHeroKingRow(item, index, featured, status, metrics)).join('');
+  $('king-heading').textContent = 'Kings';
+  $('king-copy').textContent = slotSummary;
+  $('king-stats').innerHTML =
+    '<div class="hero-table-wrap"><table class="hero-table"><colgroup><col style="width:6%"><col style="width:8%"><col style="width:27%"><col style="width:25%"><col style="width:20%"><col style="width:7%"><col style="width:7%"></colgroup><thead><tr><th class="num slot-col">Slot</th><th class="num uid-col">UID</th><th class="repo-col">Repo</th><th class="mono key-cell">Hotkey</th><th class="mono key-cell">Commit</th><th class="mono metric-col tip" data-tooltip="Defenses" aria-label="Defenses">Def</th><th class="mono metric-col">Hold</th></tr></thead><tbody>' + slotRows + '</tbody></table></div>';
+}
+
+function renderActiveDuel(status) {
+  const active = status.active_duel;
+  const scoring = status.scoring || {};
+  if (!active || active.challenger_uid == null) {
+    $('race-meta').textContent = 'IDLE';
+    $('active-duel').innerHTML = '<div class="empty">[WAITING FOR NEXT CHALLENGER]</div>';
+    return;
+  }
+  const rounds = arr(active.rounds);
+  const totalRounds = Number(active.duel_rounds || scoring.duel_rounds || 50);
+  const wins = Number(active.wins || 0);
+  const losses = Number(active.losses || 0);
+  const ties = Number(active.ties || 0);
+  const kingRepo = active.king_repo || (lastData && lastData.current_king && lastData.current_king.repo_full_name) || '';
+  const challengerRepo = active.challenger_repo || '';
+  const margin = scoring.win_margin ?? 0;
+  const threshold = decisiveThreshold(wins, losses, active.threshold, margin);
+  const taskSetPhase = active.task_set_phase || 'primary';
+  const taskSetNumber = taskSetPhase === 'confirmation_retest' ? '02' : '01';
+  const duelId = String(active.duel_id || '').padStart(6, '0');
+  const scoredRounds = activeScoredRoundCount(active, wins, losses, ties);
+  const needStatus = activeNeedStatus(active, wins, losses, ties, totalRounds, threshold);
+
+  $('race-meta').textContent = '';
+  $('active-duel').innerHTML =
+    '<div class="race-grid">' +
+      '<div class="combatant combatant--king"><div class="eyebrow">King</div><div class="repo">' + repoLink(kingRepo, active.king_pr_url || active.king_repo_url, false, true) + '</div><div class="detail">UID ' + uidCell(active.king_uid, active.king_hotkey, status.netuid) + '</div></div>' +
+      '<div class="score-box"><div class="score-line">' + activeResultHtml(active, losses, ties, wins) + '</div><div class="score-caption">' + activeResultLabel(active) + '</div></div>' +
+      '<div class="combatant combatant--challenger"><div class="eyebrow">Challenger</div><div class="repo">' + repoLink(challengerRepo, active.challenger_pr_url || active.challenger_repo_url, false, true) + '</div><div class="detail">UID ' + uidCell(active.challenger_uid, active.challenger_hotkey, status.netuid) + '</div></div>' +
+    '</div>' +
+    buildSegments(rounds, totalRounds) +
+    '<div class="duel-context">' +
+      '<span>Duel <b><a href="./duels.html?duel=' + encodeURIComponent(duelId) + '">' + escapeHtml(duelId) + '</a></b></span>' +
+      '<span>Set <b>' + taskSetNumber + '</b></span>' +
+      '<span>Round <b>' + scoredRounds + '/' + totalRounds + '</b></span>' +
+      '<span>Threshold <b>' + threshold + '</b></span>' +
+      '<span>Margin <b>' + escapeHtml(margin) + '</b></span>' +
+      (needStatus ? '<span class="duel-status ' + needStatus.cls + '">' + escapeHtml(needStatus.text) + '</span>' : '') +
+    '</div>';
+}
+
+function renderQueue(queue, netuid) {
+  const list = arr(queue);
+  const queueLabel = num(list.length) + ' queued';
+  if (!list.length) {
+    $('queue-panel').innerHTML = '<div class="panel-title"><strong>Queue</strong> / ' + queueLabel + '</div><div class="card"><div class="empty">[QUEUE EMPTY]</div></div>';
+    return;
+  }
+  const rows = list.slice(0, 40).map((item, index) => {
+    const pr = item.pr_url || (item.commit_sha ? MAIN_REPO_URL + '/pulls?q=' + encodeURIComponent(item.commit_sha) : MAIN_REPO_URL + '/pulls');
+    return '<tr><td class="num">' + String(index + 1).padStart(2, '0') + '</td><td class="num uid-col">' + uidCell(item.uid, item.hotkey, netuid) + '</td><td>' + repoLink(item.repo, pr, true) + '</td><td class="num">' + (item.commitment_block ? '#' + num(item.commitment_block) : '--') + '</td></tr>';
+  }).join('');
+  $('queue-panel').innerHTML = '<div class="panel-title"><strong>Queue</strong> / ' + queueLabel + '</div><div class="table-wrap"><table class="data-table queue-table"><colgroup><col style="width:12%"><col style="width:16%"><col style="width:52%"><col style="width:20%"></colgroup><thead><tr><th class="num">#</th><th class="num uid-col">UID</th><th>Repo / PR</th><th class="num">Block</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+
+function duelWinner(duel) {
+  const wins = Number(duel && duel.wins);
+  const losses = Number(duel && duel.losses);
+  if (!Number.isFinite(wins) || !Number.isFinite(losses)) return '';
+  const margin = Math.max(0, Number((lastData && lastData.status && lastData.status.scoring && lastData.status.scoring.win_margin) || 0));
+  if (wins >= losses + margin) return 'challenger';
+  if (losses >= wins + margin) return 'king';
+  return 'tie';
+}
+
+function sameMinerStrict(a, b) {
+  if (!a || !b) return false;
+  const aUid = a.uid ?? a.king_uid ?? a.challenger_uid;
+  const bUid = b.uid ?? b.king_uid ?? b.challenger_uid;
+  if (aUid != null && bUid != null && String(aUid) === String(bUid)) return true;
+  const aHotkey = a.hotkey || a.king_hotkey || a.challenger_hotkey;
+  const bHotkey = b.hotkey || b.king_hotkey || b.challenger_hotkey;
+  return !!aHotkey && !!bHotkey && String(aHotkey) === String(bHotkey);
+}
+
+function challengerRef(duel) {
+  return {
+    uid: duel && duel.challenger_uid,
+    hotkey: duel && (duel.challenger_hotkey || duel.hotkey),
+    repo: duel && duel.challenger_repo
+  };
+}
+
+function challengerIsCurrentKing(duel) {
+  return !!(lastData && lastData.current_king && sameMinerStrict(lastData.current_king, challengerRef(duel)));
+}
+
+function historyOutcome(duel, retestSourceId) {
+  const winner = duelWinner(duel);
+  const retestId = duel && duel.confirmation_duel_id != null ? String(duel.confirmation_duel_id).padStart(6, '0') : '';
+  const sourceId = retestSourceId != null ? String(retestSourceId).padStart(6, '0') : '';
+
+  if (duel.disqualification_reason) {
+    return { label: 'DQ', tag: 'warn', detail: 'Disqualified', search: 'dq disqualified' };
+  }
+  if (sourceId) {
+    if (winner === 'challenger' || duel.king_replaced) return { label: 'Retest passed', tag: 'good', detail: 'For ' + sourceId, search: 'confirmation retest passed set 02' };
+    if (winner === 'king') return { label: 'Retest failed', tag: 'bad', detail: 'For ' + sourceId, search: 'confirmation retest failed set 02' };
+    return { label: 'Retest', tag: 'warn', detail: 'For ' + sourceId, search: 'confirmation retest set 02' };
+  }
+  if (challengerIsCurrentKing(duel)) {
+    return { label: 'Current king', tag: 'good', detail: retestId ? 'Retest ' + retestId + ' confirmed' : 'Challenger is current king', search: 'current king confirmed dethroned' };
+  }
+  if (duel.confirmation_retest_passed === true) {
+    return { label: 'Confirmed', tag: 'good', detail: retestId ? 'Retest ' + retestId + ' passed' : 'Set 02 passed', search: 'confirmed confirmation retest passed set 02' };
+  }
+  if (duel.confirmation_retest_passed === false) {
+    if (winner === 'challenger' || challengerIsCurrentKing(duel)) {
+      return { label: 'Main set confirmed', tag: 'good', detail: retestId ? 'Set 02 failed / ' + retestId : 'Set 02 failed', search: 'main set confirmed confirmation retest failed set 02' };
+    }
+    return { label: 'Defended', tag: '', detail: 'King held', search: 'defended king held' };
+  }
+  if (winner === 'challenger') {
+    return { label: 'Round won', tag: 'warn', detail: retestId ? 'Retest ' + retestId + ' next' : 'Retest next', search: 'round won retest next pending' };
+  }
+  if (duel.king_replaced) return { label: 'Dethroned', tag: 'good', detail: 'Challenger replaced king', search: 'dethroned' };
+  return { label: 'Defended', tag: '', detail: 'King held', search: 'defended king held' };
+}
+
+function outcomeTag(duel, retestSourceId) {
+  const outcome = historyOutcome(duel, retestSourceId);
+  return '<span class="tag ' + outcome.tag + '">' + escapeHtml(outcome.label) + '</span>';
+}
+
+function compactConfirmationFailureReason(reason) {
+  const text = String(reason || '')
+    .replace(/\s*\(W=\d+\s+L=\d+\s+T=\d+\)\s*/gi, ' ')
+    .replace(/\bconfirmation\b/gi, ' ')
+    .replace(/\bduel\s+0*\d+\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return text ? text.charAt(0).toLowerCase() + text.slice(1) : '';
+}
+
+function confirmationDetail(duel) {
+  if (duel.confirmation_duel_id == null) return '';
+  const retestId = String(duel.confirmation_duel_id).padStart(6, '0');
+  const current = challengerIsCurrentKing(duel);
+  const passed = duel.confirmation_retest_passed === true;
+  const failed = duel.confirmation_retest_passed === false;
+  const label = current ? 'Current king' : passed ? 'Set 02 passed' : failed ? 'Set 02 failed' : 'Set 02 pending';
+  const failureReason = failed ? compactConfirmationFailureReason(duel.confirmation_failure_reason) : '';
+  const failure = failureReason ? ' | ' + failureReason : '';
+  return '<div class="confirmation-detail">' + escapeHtml(label) + ' / <a href="./duels.html?duel=' + encodeURIComponent(retestId) + '">' + escapeHtml(retestId) + '</a>' + escapeHtml(failure) + '</div>';
+}
+
+function retestSourceDetail(sourceDuelId) {
+  if (sourceDuelId == null) return '';
+  const sourceId = String(sourceDuelId).padStart(6, '0');
+  return '<div class="confirmation-detail">Set 02 for <a href="./duels.html?duel=' + encodeURIComponent(sourceId) + '">' + escapeHtml(sourceId) + '</a></div>';
+}
+
+function historySearchText(duel, retestSourceId) {
+  const id = String(duel.duel_id || '').padStart(6, '0');
+  const retestId = duel.confirmation_duel_id != null ? String(duel.confirmation_duel_id).padStart(6, '0') : '';
+  const sourceId = retestSourceId != null ? String(retestSourceId).padStart(6, '0') : '';
+  return [
+    id,
+    retestId,
+    sourceId,
+    duel.challenger_uid,
+    duel.challenger_hotkey,
+    duel.hotkey,
+    duel.challenger_repo,
+    duel.king_uid,
+    duel.king_hotkey,
+    duel.king_repo,
+    historyOutcome(duel, retestSourceId).search,
+    duel.confirmation_retest_passed === true ? 'confirmation retest passed set 02' : '',
+    duel.confirmation_retest_passed === false ? 'confirmation retest failed set 02' : '',
+    duel.disqualification_reason || '',
+    duel.confirmation_failure_reason || ''
+  ].join(' ').toLowerCase();
+}
+
+function renderHistory(duels) {
+  const allDuels = arr(duels);
+  const retestSources = new Map();
+  for (const duel of allDuels) {
+    if (duel.confirmation_duel_id != null) {
+      retestSources.set(String(Number(duel.confirmation_duel_id)), duel.duel_id);
+    }
+  }
+  const recent = allDuels.slice(-40).reverse();
+  const query = historySearchQuery.trim().toLowerCase();
+  const visible = query
+    ? recent.filter((duel) => historySearchText(duel, retestSources.get(String(Number(duel.duel_id)))).includes(query))
+    : recent;
+  $('history-meta').textContent = (query ? visible.length + ' / ' + recent.length + ' SHOWN | ' : '') + arr(duels).length + ' TOTAL DUELS';
+  if (!recent.length) {
+    $('history-panel').innerHTML = '<div class="card"><div class="empty">[NO DUELS PUBLISHED]</div></div>';
+    return;
+  }
+  if (!visible.length) {
+    $('history-panel').innerHTML = '<div class="card"><div class="empty">[NO MATCHING RECENT DUELS]</div></div>';
+    return;
+  }
+  let rows = '';
+  for (const duel of visible) {
+    const id = String(duel.duel_id || '').padStart(6, '0');
+    const open = openNotes.has(id);
+    rows += '<tr>' +
+      '<td class="num"><a class="duel-link" href="./duels.html?duel=' + encodeURIComponent(id) + '">' + escapeHtml(id) + '</a></td>' +
+      '<td class="num uid-col">' + uidCell(duel.challenger_uid, duel.challenger_hotkey || duel.hotkey, lastData && lastData.status && lastData.status.netuid) + '</td>' +
+      '<td>' + repoLink(duel.challenger_repo, duel.challenger_pr_url || duel.challenger_repo_url, true) + '</td>' +
+      '<td>' + outcomeTag(duel, retestSources.get(String(Number(duel.duel_id)))) + confirmationDetail(duel) + retestSourceDetail(retestSources.get(String(Number(duel.duel_id)))) + '</td>' +
+      '<td class="num" title="' + escapeHtml(duelResultLabel(duel)) + '">' + duelResultHtml(duel) + '</td>' +
+      '<td class="num">' + num(roundCount(duel)) + '</td>' +
+      '<td class="mono">' + escapeHtml(ago(duel.finished_at)) + '</td>' +
+      '<td class="num"><button class="notes-toggle" data-id="' + escapeHtml(id) + '" type="button" aria-expanded="' + (open ? 'true' : 'false') + '" aria-controls="notes-row-' + escapeHtml(id) + '">' + (open ? 'Hide' : 'Notes') + '</button></td>' +
+    '</tr>' +
+    '<tr class="notes-row ' + (open ? 'open' : '') + '" id="notes-row-' + escapeHtml(id) + '"><td class="notes-cell" colspan="8"><div class="notes-panel" id="notes-' + escapeHtml(id) + '" role="region" aria-label="Judge notes for duel ' + escapeHtml(id) + '">' + (noteCache.get(id) || '[CLICK NOTES TO LOAD]') + '</div></td></tr>';
+  }
+  $('history-panel').innerHTML = '<div class="table-wrap"><table class="data-table history-table"><colgroup><col style="width:8%"><col style="width:8%"><col style="width:27%"><col style="width:17%"><col style="width:10%"><col style="width:10%"><col style="width:12%"><col style="width:8%"></colgroup><thead><tr><th class="num">Duel</th><th class="num uid-col">UID</th><th>Challenger</th><th>Verdict</th><th class="num">Result</th><th class="num">Tasks</th><th class="mono">When</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  bindNotes();
+}
+
+function bindNotes() {
+  document.querySelectorAll('.notes-toggle').forEach((button) => {
+    button.onclick = () => {
+      const id = button.dataset.id;
+      const row = $('notes-row-' + id);
+      if (!row) return;
+      const isOpen = !row.classList.contains('open');
+      row.classList.toggle('open', isOpen);
+      button.textContent = isOpen ? 'Hide' : 'Notes';
+      button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      if (isOpen) {
+        openNotes.add(id);
+        loadNotes(id);
+      } else {
+        openNotes.delete(id);
+      }
+    };
+  });
+}
+
+async function copyText(value) {
+  if (!value) return false;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+  } catch (_) {
+    // Fall through to the legacy path without surfacing a popup.
+  }
+  try {
+    const input = document.createElement('textarea');
+    input.value = value;
+    input.setAttribute('readonly', '');
+    input.style.position = 'fixed';
+    input.style.left = '-9999px';
+    document.body.appendChild(input);
+    input.select();
+    const ok = document.execCommand('copy');
+    input.remove();
+    return ok;
+  } catch (_) {
+    return false;
+  }
+}
+
+document.addEventListener('click', async (event) => {
+  const button = event.target.closest('.copy-btn');
+  if (!button) return;
+  event.preventDefault();
+  const label = button.querySelector('.copy-label');
+  const original = label ? label.textContent : button.textContent;
+  const ok = await copyText(button.dataset.copy || '');
+  if (label) label.textContent = ok ? 'COPIED' : 'COPY?';
+  else button.textContent = ok ? 'COPIED' : 'COPY?';
+  button.classList.toggle('copied', ok);
+  button.classList.toggle('failed', !ok);
+  clearTimeout(button._copyTimer);
+  button._copyTimer = setTimeout(() => {
+    if (label) label.textContent = original || 'COPY';
+    else button.textContent = original || 'COPY';
+    button.classList.remove('copied', 'failed');
+  }, 1200);
+});
+
+function judgeNoteRounds(duel) {
+  return arr(duel.rounds).filter((round) => round.llm_judge_rationale || round.llm_judge_error || round.error);
+}
+
+function noteWinner(round) {
+  return String(round.llm_judge_winner || round.winner || 'tie').toUpperCase();
+}
+
+function noteScoreLine(round) {
+  return String(round.llm_judge_winner || round.winner || 'tie').toUpperCase();
+}
+
+function judgeNoteText(round, index) {
+  const task = round.task_name || ('round ' + (index + 1));
+  const note = round.llm_judge_error || round.error || round.llm_judge_rationale || '[NO NOTE TEXT]';
+  return [
+    'Task: ' + task,
+    'Winner: ' + noteWinner(round),
+    'Judge winner: ' + noteScoreLine(round),
+    '',
+    note
+  ].join('\n');
+}
+
+function findDuelSummary(id) {
+  const wanted = String(id || '').replace(/^0+/, '') || String(id || '');
+  return arr(lastData && lastData.duels).find((duel) => {
+    const duelId = String(duel.duel_id || '').replace(/^0+/, '') || String(duel.duel_id || '');
+    return duelId === wanted;
+  }) || null;
+}
+
+function firstPresent(values) {
+  for (const value of values) {
+    if (value != null && String(value).trim() !== '') return value;
+  }
+  return '';
+}
+
+function escapeMarkdownLinkText(value) {
+  return String(value ?? '').replace(/([\\\[\]])/g, '\\$1').replace(/\s+/g, ' ').trim();
+}
+
+function escapeMarkdownUrl(value) {
+  return String(value ?? '').trim().replace(/\\/g, '%5C').replace(/\s/g, '%20').replace(/\)/g, '%29');
+}
+
+function githubRepoUrl(repo) {
+  if (!repo) return '';
+  return 'https://github.com/' + String(repo).split('/').map(encodeURIComponent).join('/');
+}
+
+function participantCopyUrl(source, backup, prefix, repo) {
+  const prUrl = firstPresent([
+    source.pr_url,
+    source[prefix + '_pr_url'],
+    backup.pr_url,
+    backup[prefix + '_pr_url']
+  ]);
+  if (prUrl) return prUrl;
+
+  const commitSha = firstPresent([
+    source.commit_sha,
+    source[prefix + '_commit_sha'],
+    backup.commit_sha,
+    backup[prefix + '_commit_sha']
+  ]);
+  if (repo && commitSha) return githubRepoUrl(repo) + '/commit/' + encodeURIComponent(commitSha);
+
+  return firstPresent([
+    source.repo_url,
+    source[prefix + '_repo_url'],
+    backup.repo_url,
+    backup[prefix + '_repo_url']
+  ]) || githubRepoUrl(repo);
+}
+
+function participantLabel(primary, fallback, prefix) {
+  const source = primary || {};
+  const backup = fallback || {};
+  const repo = firstPresent([
+    source.repo_full_name,
+    source.repo,
+    source[prefix + '_repo_full_name'],
+    source[prefix + '_repo'],
+    backup.repo_full_name,
+    backup.repo,
+    backup[prefix + '_repo_full_name'],
+    backup[prefix + '_repo']
+  ]);
+  const uid = firstPresent([
+    source.uid,
+    source[prefix + '_uid'],
+    backup.uid,
+    backup[prefix + '_uid']
+  ]);
+  const hotkey = firstPresent([
+    source.hotkey,
+    source[prefix + '_hotkey'],
+    backup.hotkey,
+    backup[prefix + '_hotkey']
+  ]);
+  const label = repo || (uid !== '' ? 'UID ' + uid : '') || hotkey;
+  if (!label) return 'UNKNOWN';
+  const text = label + (repo && uid !== '' ? ' (UID ' + uid + ')' : '');
+  const url = participantCopyUrl(source, backup, prefix, repo);
+  return url ? '[' + escapeMarkdownLinkText(label) + '](' + escapeMarkdownUrl(url) + ')' + (repo && uid !== '' ? ' (UID ' + uid + ')' : '') : text;
+}
+
+function duelNoteCopyText(duel, rounds, summary) {
+  const id = duel.duel_id ? String(duel.duel_id).padStart(6, '0') : 'unknown';
+  const king = participantLabel(duel.king_before || duel.king || duel.king_after, summary, 'king');
+  const challenger = participantLabel(duel.challenger, summary, 'challenger');
+  const header = [
+    'Duel: ' + id,
+    'King: ' + king,
+    'Challenger: ' + challenger
+  ].join('\n');
+  const body = rounds.map((round, index) => judgeNoteText(round, index)).join('\n\n---\n\n');
+  return header + '\n\n' + (body || '[NO JUDGE NOTES]');
+}
+
+function noteCopyButton(text, label) {
+  return '<button class="copy-btn note-copy" type="button" data-copy="' + escapeHtml(text) + '" aria-label="' + escapeHtml(label) + '"><span class="copy-label">COPY</span></button>';
+}
+
+function notesHtml(duel, summary) {
+  const rounds = judgeNoteRounds(duel);
+  if (!rounds.length) return '<div class="empty">[NO JUDGE NOTES IN ARTIFACT]</div>';
+  const shown = rounds.slice(0, 25);
+  const items = shown.map((round, index) => {
+    const text = round.llm_judge_error || round.error || round.llm_judge_rationale || '';
+    const task = round.task_name || 'round';
+    return '<div class="note"><div class="note-head"><div class="note-head-main"><span>' + escapeHtml(task) + '</span><span>' + escapeHtml(noteWinner(round)) + ' | ' + escapeHtml(noteScoreLine(round)) + '</span></div>' + noteCopyButton(judgeNoteText(round, index), 'Copy judge note for ' + task) + '</div><div class="note-text">' + escapeHtml(text || '[NO NOTE TEXT]') + '</div></div>';
+  }).join('');
+  return '<div class="notes-panel-head"><div class="notes-panel-title">Judge Notes</div><div class="notes-panel-actions"><button class="copy-btn notes-copy-all" type="button" data-copy="' + escapeHtml(duelNoteCopyText(duel, rounds, summary)) + '" aria-label="Copy all judge notes"><span class="copy-label">COPY ALL</span></button><div class="metric-note">' + rounds.length + ' notes / showing ' + shown.length + '</div></div></div><div class="notes-scroll" tabindex="0">' + items + '</div>';
+}
+
+async function loadNotes(id) {
+  const panel = $('notes-' + id);
+  if (!panel) return;
+  if (noteCache.has(id)) {
+    panel.innerHTML = noteCache.get(id);
+    return;
+  }
+  panel.textContent = '[LOADING JUDGE NOTES]';
+  try {
+    const response = await fetch('./duels/' + id + '.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const duel = await response.json();
+    const html = notesHtml(duel, findDuelSummary(id));
+    noteCache.set(id, html);
+    panel.innerHTML = html;
+  } catch (_) {
+    panel.innerHTML = '<div class="empty">[JUDGE NOTES UNAVAILABLE]</div>';
+  }
+}
+
+function renderInactive(status) {
+  const combined = arr(status.disqualified).map((item) => ({ ...item, kind: 'DQ' }))
+    .concat(arr(status.retired).map((item) => ({ ...item, kind: 'Retired' })));
+  if (!combined.length) {
+    $('inactive-panel').innerHTML = '<div class="panel-title"><strong>Fallen</strong> / dq and retired</div><div class="card"><div class="empty">[NO DISQUALIFIED OR RETIRED MINERS]</div></div>';
+    return;
+  }
+  const rows = combined.slice(0, 60).map((item) =>
+    '<div class="fallen-item">' +
+      '<span class="tag ' + (item.kind === 'DQ' ? 'warn' : '') + '">' + escapeHtml(item.kind) + '</span>' +
+      '<span class="uid-cell">' + uidCell(item.uid, item.hotkey, status.netuid) + '</span>' +
+      '<span class="repo-cell">' + repoLink(item.repo, item.pr_url || item.repo_url, true) + '</span>' +
+    '</div>'
+  ).join('');
+  const panel = $('inactive-panel');
+  let scroller = $('fallen-list-scroll');
+  if (!scroller || !panel.contains(scroller)) {
+    panel.innerHTML = '<div class="panel-title"><strong>Fallen</strong> / dq and retired</div><div class="card tight fallen-card"><div class="fallen-list-wrap" id="fallen-list-scroll" tabindex="0" role="region" aria-label="Disqualified and retired miners"><div class="fallen-head"><span>State</span><span>UID</span><span>Repo</span></div><div class="fallen-list"></div></div></div>';
+    scroller = $('fallen-list-scroll');
+  }
+  const list = scroller.querySelector('.fallen-list');
+  if (list) list.innerHTML = rows;
+}
+
+function stateKey(element, index) {
+  if (element.id) return element.id;
+  const notesPanel = element.closest('.notes-panel[id]');
+  if (notesPanel) return notesPanel.id + ':scroll';
+  const owner = element.closest('[id]');
+  const table = element.querySelector('table');
+  const tableClass = table ? Array.from(table.classList).sort().join('.') : '';
+  return (owner ? owner.id : 'page') + ':' + (tableClass || element.tagName.toLowerCase()) + ':' + index;
+}
+
+function inputStateKey(element, index) {
+  if (element.id) return element.id;
+  if (element.name) return element.name;
+  const owner = element.closest('[id]');
+  return (owner ? owner.id : 'page') + ':input:' + index;
+}
+
+function syncOpenNotesFromDom() {
+  document.querySelectorAll('.notes-row.open[id]').forEach((row) => {
+    openNotes.add(String(row.id).replace(/^notes-row-/, ''));
+  });
+}
+
+const SCROLL_STATE_SELECTOR = '.table-wrap, .notes-scroll, #fallen-list-scroll';
+
+function snapshotUiState() {
+  syncOpenNotesFromDom();
+  return {
+    scroll: Array.from(document.querySelectorAll(SCROLL_STATE_SELECTOR)).map((element, index) => ({
+      key: stateKey(element, index),
+      top: element.scrollTop,
+      left: element.scrollLeft
+    })),
+    inputs: Array.from(document.querySelectorAll('input, textarea, select')).map((element, index) => ({
+      key: inputStateKey(element, index),
+      value: element.value,
+      checked: element.checked,
+      selectionStart: typeof element.selectionStart === 'number' ? element.selectionStart : null,
+      selectionEnd: typeof element.selectionEnd === 'number' ? element.selectionEnd : null
+    }))
+  };
+}
+
+function restoreUiState(snapshot) {
+  if (!snapshot) return;
+  const scrollByKey = new Map(arr(snapshot.scroll).map((item) => [item.key, item]));
+  document.querySelectorAll(SCROLL_STATE_SELECTOR).forEach((element, index) => {
+    const saved = scrollByKey.get(stateKey(element, index));
+    if (!saved) return;
+    element.scrollTop = saved.top || 0;
+    element.scrollLeft = saved.left || 0;
+  });
+
+  const inputsByKey = new Map(arr(snapshot.inputs).map((item) => [item.key, item]));
+  document.querySelectorAll('input, textarea, select').forEach((element, index) => {
+    const saved = inputsByKey.get(inputStateKey(element, index));
+    if (!saved) return;
+    if ('checked' in element) element.checked = !!saved.checked;
+    element.value = saved.value;
+    if (saved.selectionStart != null && typeof element.setSelectionRange === 'function') {
+      try {
+        element.setSelectionRange(saved.selectionStart, saved.selectionEnd);
+      } catch (_) {
+        // Some input types do not expose a selectable text range.
+      }
+    }
+  });
+}
+
+function renderAll(data) {
+  const uiState = snapshotUiState();
+  lastData = data;
+  const status = data.status || {};
+  const duels = arr(data.duels);
+  $('system-status').textContent = 'LIVE';
+  $('system-status').className = 'status-ok';
+  $('updated-at').textContent = ago(data.updated_at);
+  const recentDethrones = recentDethronesSummary(data);
+  $('validator-stat').textContent = ago(status.validator_started_at);
+  $('history-dethrone-stat').textContent = recentDethrones.replaced + '/' + recentDethrones.total;
+  $('footer-status').textContent = duels.length + ' DUELS | ' + num(status.total_rounds || duels.reduce((sum, duel) => sum + roundCount(duel), 0)) + ' ROUNDS | ' + num(status.miners_seen) + ' MINERS SEEN';
+  renderKing(data);
+  renderActiveDuel(status);
+  renderQueue(status.queue, status.netuid);
+  renderHistory(duels);
+  renderInactive(status);
+  restoreUiState(uiState);
+}
+
+async function fetchAndRender() {
+  try {
+    let data = null;
+    let lastError = null;
+    for (const url of DATA_URLS) {
+      try {
+        const response = await fetch(url, { cache: 'no-store' });
+        if (!response.ok) throw new Error(url + ' HTTP ' + response.status);
+        data = await response.json();
+        break;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    if (!data) throw lastError || new Error('dashboard unavailable');
+    if (!data || typeof data !== 'object') throw new Error('Invalid JSON');
+    const duelsLink = $('duels-link');
+    if (duelsLink) duelsLink.href = safeHref(dashboardLink(data, 'duels_html', './duels.html'), './duels.html');
+    renderAll(data);
+  } catch (error) {
+    renderShellError(error.message || 'dashboard unavailable');
+  } finally {
+    clearTimeout(retryTimer);
+    retryTimer = setTimeout(fetchAndRender, POLL_MS);
+  }
+}
+
+const THEME_STORAGE_KEY = 'ninja66_theme';
+const THEME_MEDIA_QUERY = '(prefers-color-scheme: dark)';
+
+function savedTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    return saved === 'light' || saved === 'dark' ? saved : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function storeTheme(theme) {
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch (_) {
+    // Theme still changes for this session if storage is unavailable.
+  }
+}
+
+function systemTheme(mediaQuery) {
+  return mediaQuery && mediaQuery.matches ? 'dark' : 'light';
+}
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  syncThemeButton();
+}
+
+function initTheme() {
+  const saved = savedTheme();
+  const mediaQuery = window.matchMedia ? window.matchMedia(THEME_MEDIA_QUERY) : null;
+  applyTheme(saved || systemTheme(mediaQuery));
+
+  if (!saved && mediaQuery) {
+    const handleSystemThemeChange = (event) => {
+      if (!savedTheme()) applyTheme(systemTheme(event));
+    };
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleSystemThemeChange);
+    } else if (typeof mediaQuery.addListener === 'function') {
+      mediaQuery.addListener(handleSystemThemeChange);
+    }
+  }
+}
+
+function syncThemeButton() {
+  $('theme-toggle').textContent = document.documentElement.dataset.theme === 'dark' ? 'Light' : 'Dark';
+}
+
+$('theme-toggle').addEventListener('click', () => {
+  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  storeTheme(next);
+});
+
+function initHistorySearch() {
+  const input = $('history-search');
+  if (!input) return;
+  historySearchQuery = input.value || '';
+  input.addEventListener('input', () => {
+    historySearchQuery = input.value || '';
+    if (lastData) renderHistory(arr(lastData.duels));
+  });
+}
+
+initTheme();
+initHistorySearch();
+fetchAndRender();
+</script>
+</body>
+</html>

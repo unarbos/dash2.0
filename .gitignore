@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+*.log
+
+# Local dashboard/state artifacts
+dashboard_data.json
+state.json
+duels

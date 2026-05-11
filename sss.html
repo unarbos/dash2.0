@@ -1,0 +1,405 @@
+The code below contains a design. This design should be used to create a new app or be added to an existing one.
+
+Look at the current open project to determine if a project exists. If no project is open, create a new Vite project then create this view in React after componentizing it.
+
+If a project does exist, determine the framework being used and implement the design within that framework. Identify whether reusable components already exist that can be used to implement the design faithfully and if so use them, otherwise create new components. If other views already exist in the project, make sure to place the view in a sensible route and connect it to the other views.
+
+Ensure the visual characteristics, layout, and interactions in the design are preserved with perfect fidelity.
+
+Run the dev command so the user can see the app once finished.
+
+```
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">INDUSTRIAL MANIFEST — 008</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="5">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="6">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=Inter:wght@900&amp;display=swap" rel="stylesheet" vid="7">
+    <style vid="8">
+        :root {
+            --concrete: #c8c4bc;
+            --rust: #8b3a2a;
+            --charcoal: #121212;
+            --grid-line: #8b3a2a;
+            --text-main: #121212;
+            --cell-size: 60px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: crosshair;
+        }
+
+        body {
+            background-color: var(--charcoal);
+            font-family: 'IBM+Plex+Mono', monospace;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        
+        .manifest-container {
+            background-color: var(--concrete);
+            width: 100%;
+            max-width: 1100px;
+            min-height: 1400px;
+            padding: 0;
+            position: relative;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        
+        .grid-layer {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            border-bottom: 1px solid var(--grid-line);
+        }
+
+        .cell {
+            border-right: 1px solid var(--grid-line);
+            padding: 12px;
+            position: relative;
+            min-height: var(--cell-size);
+        }
+
+        .cell:last-child {
+            border-right: none;
+        }
+
+        
+        .label-tiny {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .data-value {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        
+        .header-block {
+            height: 420px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            border-bottom: 1px solid var(--grid-line);
+        }
+
+        .glyph-container {
+            border-right: 1px solid var(--grid-line);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            padding: 1px;
+        }
+
+        .glyph-container:last-child {
+            border-right: none;
+        }
+
+        .g-cell {
+            background-color: transparent;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        
+        .fill { background-color: var(--rust); }
+        .r-top-left { border-radius: 100% 0 0 0; background-color: var(--rust); }
+        .r-top-right { border-radius: 0 100% 0 0; background-color: var(--rust); }
+        .r-bot-left { border-radius: 0 0 0 100%; background-color: var(--rust); }
+        .r-bot-right { border-radius: 0 0 100% 0; background-color: var(--rust); }
+        
+        .number-badge {
+            background: white;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--rust);
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            z-index: 10;
+        }
+
+        
+        .manifest-table {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            flex-grow: 1;
+        }
+
+        .manifest-column {
+            border-right: 1px solid var(--grid-line);
+        }
+
+        .manifest-column:last-child {
+            border-right: none;
+        }
+
+        .entry {
+            border-bottom: 1px solid var(--grid-line);
+            padding: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            transition: background 0.1s ease;
+        }
+
+        .entry:hover {
+            background-color: rgba(139, 58, 42, 0.05);
+        }
+
+        .entry-index {
+            font-size: 11px;
+            font-weight: 600;
+            text-decoration: underline;
+            min-width: 20px;
+        }
+
+        .entry-name {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            line-height: 1.2;
+        }
+
+        
+        .footer-grid {
+            border-top: 2px solid var(--rust);
+            margin-top: auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+        }
+
+        .footer-cell {
+            padding: 20px;
+            border-right: 1px solid var(--grid-line);
+        }
+
+        .footer-cell:last-child {
+            border-right: none;
+        }
+
+        
+        .nav-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            height: 100%;
+            width: 100%;
+        }
+
+        .nav-link:hover .label-tiny {
+            color: white;
+        }
+        
+        .nav-link:hover {
+            background-color: var(--rust);
+            color: white;
+        }
+
+        
+        .industrial-pattern {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 100px;
+            height: 100%;
+            opacity: 0.1;
+            background-image: repeating-linear-gradient(45deg, var(--rust) 0, var(--rust) 1px, transparent 0, transparent 10px);
+            pointer-events: none;
+        }
+
+        @media (max-width: 900px) {
+            .manifest-table { grid-template-columns: 1fr; }
+            .header-block { height: auto; grid-template-columns: 1fr; }
+            .glyph-container { height: 300px; }
+        }
+    </style>
+</head>
+<body vid="9">
+
+    <main class="manifest-container" vid="10">
+        
+        <div class="grid-layer" vid="11">
+            <div class="cell" style="grid-column: span 4;" vid="12">
+                <span class="label-tiny" vid="13">System.Archive</span>
+                <span class="data-value" vid="14">WHS-08 // LOGISTICS</span>
+            </div>
+            <div class="cell" style="grid-column: span 2;" vid="15">
+                <span class="label-tiny" vid="16">Status</span>
+                <span class="data-value" vid="17">OPERATIONAL</span>
+            </div>
+            <div class="cell" style="grid-column: span 3;" vid="18">
+                <span class="label-tiny" vid="19">Location</span>
+                <span class="data-value" vid="20">SECTOR_G / TERMINAL_4</span>
+            </div>
+            <div class="cell nav-link-container" style="grid-column: span 3; padding: 0;" vid="21">
+                <a href="#" class="nav-link" vid="22">
+                    <div style="padding: 12px;" vid="23">
+                        <span class="label-tiny" vid="24">Action</span>
+                        <span class="data-value" vid="25">DOWNLOAD_MANIFEST.PDF</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        
+        <section class="header-block" vid="26">
+            
+            <div class="glyph-container" vid="27">
+                <div class="g-cell fill" vid="28"></div><div class="g-cell" vid="29"></div><div class="g-cell fill" vid="30"></div>
+                <div class="g-cell fill" vid="31"></div><div class="g-cell r-bot-right" vid="32"></div><div class="g-cell fill" vid="33"></div>
+                <div class="g-cell fill" vid="34"></div><div class="g-cell" vid="35"></div><div class="g-cell fill" vid="36"></div>
+                <div class="number-badge" vid="37">08</div>
+            </div>
+            
+            <div class="glyph-container" vid="38">
+                <div class="g-cell r-top-left" vid="39"></div><div class="g-cell fill" vid="40"></div><div class="g-cell r-top-right" vid="41"></div>
+                <div class="g-cell fill" vid="42"></div><div class="g-cell" vid="43"></div><div class="g-cell fill" vid="44"></div>
+                <div class="g-cell fill" vid="45"></div><div class="g-cell fill" vid="46"></div><div class="g-cell fill" vid="47"></div>
+            </div>
+            
+            <div class="glyph-container" vid="48">
+                <div class="g-cell fill" vid="49"></div><div class="g-cell r-top-left" vid="50"></div><div class="g-cell" vid="51"></div>
+                <div class="g-cell fill" vid="52"></div><div class="g-cell fill" vid="53"></div><div class="g-cell fill" vid="54"></div>
+                <div class="g-cell fill" vid="55"></div><div class="g-cell" vid="56"></div><div class="g-cell fill" vid="57"></div>
+                <div class="number-badge" vid="58">12</div>
+            </div>
+        </section>
+
+        
+        <section class="manifest-table" vid="59">
+            
+            <div class="manifest-column" vid="60">
+                <div class="grid-layer" style="grid-template-columns: 1fr; background: rgba(139, 58, 42, 0.1);" vid="61">
+                    <div class="cell" vid="62"><span class="label-tiny" vid="63">Shift A: 06:00 — 12:00</span></div>
+                </div>
+                <div class="entry" vid="64"><span class="entry-index" vid="65">01</span><span class="entry-name" vid="66">CORE TEMPERATURE SYNC</span></div>
+                <div class="entry" vid="67"><span class="entry-index" vid="68">02</span><span class="entry-name" vid="69">HYDRAULIC PRESSURE TEST</span></div>
+                <div class="entry" vid="70"><span class="entry-index" vid="71">03</span><span class="entry-name" vid="72">ARC-LIGHT CALIBRATION</span></div>
+                <div class="entry" vid="73"><span class="entry-index" vid="74">04</span><span class="entry-name" vid="75">KINETIC BUFFER PURGE</span></div>
+                <div class="entry" vid="76"><span class="entry-index" vid="77">05</span><span class="entry-name" vid="78">OXYGEN SCRUBBER LOG</span></div>
+                <div class="entry" vid="79"><span class="entry-index" vid="80">06</span><span class="entry-name" vid="81">THERMAL SHIELD CHECK</span></div>
+                <div class="entry" vid="82"><span class="entry-index" vid="83">07</span><span class="entry-name" vid="84">STATIC LOAD RELEASE</span></div>
+                <div class="entry" vid="85"><span class="entry-index" vid="86">08</span><span class="entry-name" vid="87">SIGNAL INTEGRITY SCAN</span></div>
+            </div>
+
+            
+            <div class="manifest-column" vid="88">
+                <div class="grid-layer" style="grid-template-columns: 1fr; background: rgba(139, 58, 42, 0.1);" vid="89">
+                    <div class="cell" vid="90"><span class="label-tiny" vid="91">Shift B: 12:00 — 18:00</span></div>
+                </div>
+                <div class="entry" vid="92"><span class="entry-index" vid="93">09</span><span class="entry-name" vid="94">MANIFOLD FLUID DRAIN</span></div>
+                <div class="entry" vid="95"><span class="entry-index" vid="96">10</span><span class="entry-name" vid="97">COIL INDUCTANCE MEASURE</span></div>
+                <div class="entry" vid="98"><span class="entry-index" vid="99">11</span><span class="entry-name" vid="100">VALVE SEAL INTEGRITY</span></div>
+                <div class="entry" vid="101"><span class="entry-index" vid="102">12</span><span class="entry-name" vid="103">TURBINE PHASE ALIGN</span></div>
+                <div class="entry" vid="104"><span class="entry-index" vid="105">13</span><span class="entry-name" vid="106">DATA SILO BACKUP</span></div>
+                <div class="entry" vid="107"><span class="entry-index" vid="108">14</span><span class="entry-name" vid="109">GEARBOX LUBRICATION</span></div>
+                <div class="entry" vid="110"><span class="entry-index" vid="111">15</span><span class="entry-name" vid="112">RELAY SWITCH TEST</span></div>
+                <div class="entry" vid="113"><span class="entry-index" vid="114">16</span><span class="entry-name" vid="115">COOLANT FLOW ADJUST</span></div>
+            </div>
+
+            
+            <div class="manifest-column" vid="116">
+                <div class="grid-layer" style="grid-template-columns: 1fr; background: rgba(139, 58, 42, 0.1);" vid="117">
+                    <div class="cell" vid="118"><span class="label-tiny" vid="119">Shift C: 18:00 — 00:00</span></div>
+                </div>
+                <div class="entry" vid="120"><span class="entry-index" vid="121">17</span><span class="entry-name" vid="122">EXHAUST FILTRATION</span></div>
+                <div class="entry" vid="123"><span class="entry-index" vid="124">18</span><span class="entry-name" vid="125">GRID OVERLOAD PREVENT</span></div>
+                <div class="entry" vid="126"><span class="entry-index" vid="127">19</span><span class="entry-name" vid="128">OPTIC SENSOR CLEANSE</span></div>
+                <div class="entry" vid="129"><span class="entry-index" vid="130">20</span><span class="entry-name" vid="131">PRESSURE PLATE RESET</span></div>
+                <div class="entry" vid="132"><span class="entry-index" vid="133">21</span><span class="entry-name" vid="134">VIBRATION DAMPING</span></div>
+                <div class="entry" vid="135"><span class="entry-index" vid="136">22</span><span class="entry-name" vid="137">CRITICAL ALARM SYNC</span></div>
+                <div class="entry" vid="138"><span class="entry-index" vid="139">23</span><span class="entry-name" vid="140">EMERGENCY SHUTDOWN</span></div>
+                <div class="entry" vid="141"><span class="entry-index" vid="142">00</span><span class="entry-name" vid="143">SYSTEM STANDBY INIT</span></div>
+            </div>
+        </section>
+
+        
+        <section class="header-block" style="height: 300px; border-top: 1px solid var(--grid-line); border-bottom: none;" vid="144">
+            
+            <div class="glyph-container" vid="145">
+                <div class="g-cell fill" vid="146"></div><div class="g-cell fill" vid="147"></div><div class="g-cell fill" vid="148"></div>
+                <div class="g-cell" vid="149"></div><div class="g-cell fill" vid="150"></div><div class="g-cell" vid="151"></div>
+                <div class="g-cell fill" vid="152"></div><div class="g-cell fill" vid="153"></div><div class="g-cell fill" vid="154"></div>
+            </div>
+            
+            <div class="glyph-container" vid="155">
+                <div class="g-cell fill" vid="156"></div><div class="g-cell fill" vid="157"></div><div class="g-cell fill" vid="158"></div>
+                <div class="g-cell fill" vid="159"></div><div class="g-cell" vid="160"></div><div class="g-cell" vid="161"></div>
+                <div class="g-cell fill" vid="162"></div><div class="g-cell" vid="163"></div><div class="g-cell" vid="164"></div>
+            </div>
+            
+            <div class="glyph-container" vid="165">
+                <div class="g-cell fill" vid="166"></div><div class="g-cell fill" vid="167"></div><div class="g-cell fill" vid="168"></div>
+                <div class="g-cell" vid="169"></div><div class="g-cell fill" vid="170"></div><div class="g-cell" vid="171"></div>
+                <div class="g-cell" vid="172"></div><div class="g-cell fill" vid="173"></div><div class="g-cell" vid="174"></div>
+                <div class="number-badge" vid="175">24</div>
+            </div>
+        </section>
+
+        
+        <footer class="footer-grid" vid="176">
+            <div class="footer-cell" vid="177">
+                <span class="label-tiny" vid="178">Archival Reference</span>
+                <p style="font-size: 11px; line-height: 1.4; max-width: 400px;" vid="179">
+                    This document is intended for authorized warehouse personnel only. Unauthorized reproduction or distribution is strictly prohibited under Sector-G Protocol. All industrial components listed must be inspected bi-weekly.
+                </p>
+            </div>
+            <div class="footer-cell" vid="180">
+                <span class="label-tiny" vid="181">Batch ID</span>
+                <span class="data-value" vid="182">#992-ARC-02</span>
+            </div>
+            <div class="footer-cell" vid="183">
+                <span class="label-tiny" vid="184">Last Modified</span>
+                <span class="data-value" vid="185">12.OCT.1994</span>
+            </div>
+        </footer>
+
+        <div class="industrial-pattern" vid="186"></div>
+    </main>
+
+    <script vid="187">
+        
+        document.querySelectorAll('.entry').forEach(entry => {
+            entry.addEventListener('click', () => {
+                entry.style.backgroundColor = 'var(--rust)';
+                entry.style.color = 'white';
+                setTimeout(() => {
+                    entry.style.backgroundColor = 'transparent';
+                    entry.style.color = 'var(--text-main)';
+                }, 400);
+            });
+        });
+
+        
+        console.log("%c INDUSTRIAL ARCHIVE v0.0.8 ", "background: #8b3a2a; color: #fff; font-weight: bold; padding: 10px;");
+    </script>
+
+</body></html>
+```

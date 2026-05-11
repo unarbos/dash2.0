@@ -747,6 +747,7 @@ const INDEX_URL = './duels/index.json';
 const PAGE_SIZE = 50;
 const PUBLIC_BASE = 'https://us-east-1.hippius.com/constantinople/sn66';
 const BASE_REPO_FULL_NAME = 'unarbos/ninja';
+const DEFAULT_WIN_MARGIN = 3;
 
 let indexPayload = null;
 let allDuels = [];
@@ -820,7 +821,17 @@ function duelErrorCount(duel) {
 }
 
 function duelWinMargin() {
-  return Math.max(0, Number(indexPayload && indexPayload.scoring && indexPayload.scoring.win_margin) || 0);
+  const candidates = [
+    indexPayload && indexPayload.scoring && indexPayload.scoring.win_margin,
+    indexPayload && indexPayload.status && indexPayload.status.scoring && indexPayload.status.scoring.win_margin,
+    indexPayload && indexPayload.win_margin,
+    DEFAULT_WIN_MARGIN
+  ];
+  for (const value of candidates) {
+    const margin = Number(value);
+    if (Number.isFinite(margin) && margin >= 0) return margin;
+  }
+  return DEFAULT_WIN_MARGIN;
 }
 
 function duelWinConditionText() {

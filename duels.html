@@ -388,6 +388,18 @@ input:focus { border-color: var(--text-display); }
   padding: 10px 12px;
   text-transform: uppercase;
 }
+.artifact-cell {
+  min-width: 190px;
+}
+.artifact-cell .artifact-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.artifact-link.compact {
+  border-radius: 8px;
+  font-size: 9px;
+  padding: 6px 7px;
+}
 .artifact-link:hover { border-color: var(--interactive); }
 .artifact-heading { margin-top: var(--space-lg); }
 .copy-row {
@@ -635,21 +647,17 @@ input:focus { border-color: var(--text-display); }
   .round-table col:nth-child(1) { width: 8% !important; }
   .round-table col:nth-child(2) { width: 42% !important; }
   .round-table col:nth-child(3) { width: 24% !important; }
-  .round-table col:nth-child(5) { width: 26% !important; }
+  .round-table col:nth-child(6) { width: 26% !important; }
   .round-table col:nth-child(4),
-  .round-table col:nth-child(6),
+  .round-table col:nth-child(5),
   .round-table col:nth-child(7),
   .round-table thead th:nth-child(4),
-  .round-table thead th:nth-child(6),
+  .round-table thead th:nth-child(5),
   .round-table thead th:nth-child(7),
   .round-table tbody > tr.round-row > td:nth-child(4),
-  .round-table tbody > tr.round-row > td:nth-child(6),
+  .round-table tbody > tr.round-row > td:nth-child(5),
   .round-table tbody > tr.round-row > td:nth-child(7) {
     display: none;
-  }
-  .round-table th:nth-child(5),
-  .round-table tbody > tr.round-row > td:nth-child(5) {
-    text-align: right;
   }
   .task-cell {
     white-space: normal;
@@ -1274,10 +1282,8 @@ function artifactUrl(duelId, task, path) {
   return PUBLIC_BASE + '/duels/' + safeId + '/rounds/' + safeTask + '/' + path;
 }
 
-function artifactLinks(duelId, task) {
+function artifactLinks(duelId, task, compact) {
   return [
-    ['task.txt', 'task.txt'],
-    ['reference.patch', 'reference.patch'],
     ['king.diff', 'solutions/king.diff'],
     ['challenger.diff', 'solutions/challenger.diff'],
     ['king.solve.json', 'solutions/king.solve.json'],
@@ -1287,7 +1293,7 @@ function artifactLinks(duelId, task) {
     ['king--challenger.json', 'comparisons/king--challenger.json']
   ].map(([label, path]) => {
     const href = artifactUrl(duelId, task, path);
-    return '<a class="artifact-link" href="' + safeHref(href, '#') + '" target="_blank" rel="noreferrer">' + escapeHtml(label) + '</a>';
+    return '<a class="artifact-link ' + (compact ? 'compact' : '') + '" href="' + safeHref(href, '#') + '" target="_blank" rel="noreferrer">' + escapeHtml(label) + '</a>';
   }).join('');
 }
 
@@ -1296,8 +1302,6 @@ function roundNoteText(duelId, round, index) {
   const note = round.llm_judge_error || round.error || round.llm_judge_rationale || '[NO JUDGE RATIONALE]';
   const judgeNotes = judgeDecisionMarkdown(round);
   const links = [
-    ['task.txt', 'task.txt'],
-    ['reference.patch', 'reference.patch'],
     ['king.diff', 'solutions/king.diff'],
     ['challenger.diff', 'solutions/challenger.diff'],
     ['king.solve.json', 'solutions/king.solve.json'],
@@ -1537,7 +1541,7 @@ function renderDuelDetail(duel) {
 
   const rows = rounds.map((round, index) => renderRoundRows(duel, round, index)).join('');
   const table = rows
-    ? '<div class="table-wrap"><table class="data-table round-table"><colgroup><col style="width:4%"><col style="width:34%"><col style="width:13%"><col style="width:18%"><col style="width:16%"><col style="width:15%"></colgroup><thead><tr><th></th><th class="task-col">Task</th><th>Winner</th><th>Consensus</th><th>Exit</th><th class="num">Judges</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+    ? '<div class="table-wrap"><table class="data-table round-table"><colgroup><col style="width:4%"><col style="width:29%"><col style="width:11%"><col style="width:14%"><col style="width:12%"><col style="width:20%"><col style="width:10%"></colgroup><thead><tr><th></th><th class="task-col">Task</th><th>Winner</th><th>Consensus</th><th>Exit</th><th>Artifacts</th><th class="num">Judges</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
     : '<div class="empty">[NO ROUNDS IN DUEL ARTIFACT]</div>';
   return summary + table;
 }
@@ -1556,9 +1560,10 @@ function renderRoundRows(duel, round, index) {
     '<td>' + winnerTag(winner) + '</td>' +
     '<td>' + escapeHtml(round.llm_judge_consensus_status || '--') + '</td>' +
     '<td>' + escapeHtml(round.challenger_exit_reason || '--') + '</td>' +
+    '<td class="artifact-cell"><div class="artifact-grid">' + artifactLinks(duelId, task, true) + '</div></td>' +
     '<td class="num">' + num(judgeCount) + '</td>' +
   '</tr>' +
-  '<tr class="round-detail-row ' + (open ? 'open' : '') + '" id="round-detail-' + escapeHtml(key) + '"><td class="round-detail" colspan="6">' + (open ? renderRoundDetail(duel, round, index) : '') + '</td></tr>';
+  '<tr class="round-detail-row ' + (open ? 'open' : '') + '" id="round-detail-' + escapeHtml(key) + '"><td class="round-detail" colspan="7">' + (open ? renderRoundDetail(duel, round, index) : '') + '</td></tr>';
 }
 
 function winnerTag(winner) {

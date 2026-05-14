@@ -3,6 +3,7 @@ import http.server
 import socketserver
 import os
 import urllib.error
+import urllib.parse
 import urllib.request
 import json
 import threading
@@ -24,6 +25,10 @@ LOCAL_DASHBOARD_PATH = os.environ.get(
     DEFAULT_LOCAL_DASHBOARD_PATH,
 )
 PUBLIC_BASE_URL = os.environ.get("R2_PUBLIC_URL", "https://s3.hippius.com/constantinople")
+SUBMISSIONS_API_UPSTREAM = os.environ.get(
+    "SUBMISSIONS_API_UPSTREAM",
+    "http://127.0.0.1:8066/api/submissions",
+)
 
 
 _dashboard_cache = {"data": None, "ts": 0}
@@ -55,13 +60,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def end_headers(self):
         path = getattr(self, "path", None)
-        if path == "/health":
+        route = (path or "").split("?", 1)[0].rstrip("/") or "/"
+        if route == "/health":
             pass
-        elif path == "/dashboard-summary.json":
+        elif route == "/api/submissions":
             self.send_header("Cache-Control", "no-cache, max-age=0")
-        elif path == "/dashboard.json":
+        elif route == "/dashboard-summary.json":
             self.send_header("Cache-Control", "no-cache, max-age=0")
-        elif path == "/duels/index.json":
+        elif route == "/dashboard.json":
+            self.send_header("Cache-Control", "no-cache, max-age=0")
+        elif route == "/duels/index.json":
             self.send_header("Cache-Control", "no-cache, max-age=60")
         elif path and DUEL_PATH_RE.match(path):
             self.send_header("Cache-Control", "no-cache, max-age=30")
@@ -97,6 +105,57 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.send_header(key, value)
         self.end_headers()
         self.wfile.write(data)
+
+    def _is_submissions_api_path(self):
+        route = self.path.split("?", 1)[0].rstrip("/") or "/"
+        return route == "/api/submissions"
+
+    def _proxy_submissions_api(self, method):
+        parsed = urllib.parse.urlsplit(self.path)
+        upstream_url = SUBMISSIONS_API_UPSTREAM.rstrip("/")
+        if parsed.query:
+            upstream_url = f"{upstream_url}?{parsed.query}"
+
+        body = None
+        if method in {"POST", "PUT", "PATCH"}:
+            try:
+                length = int(self.headers.get("Content-Length") or "0")
+            except ValueError:
+                length = 0
+            body = self.rfile.read(max(0, length))
+
+        headers = {}
+        for name in ("Content-Type", "Accept", "User-Agent"):
+            value = self.headers.get(name)
+            if value:
+                headers[name] = value
+        if body is not None:
+            headers["Content-Length"] = str(len(body))
+        headers["X-Forwarded-For"] = self.client_address[0]
+        if self.headers.get("Host"):
+            headers["X-Forwarded-Host"] = self.headers.get("Host")
+        headers["X-Forwarded-Proto"] = "https" if self.headers.get("CF-Visitor") else "http"
+
+        request = urllib.request.Request(
+            upstream_url,
+            data=body,
+            headers=headers,
+            method=method,
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=310) as response:
+                content_type = response.headers.get("Content-Type", "application/json")
+                self._send_bytes(response.read(), content_type, status=response.status, cors=True)
+        except urllib.error.HTTPError as exc:
+            content_type = exc.headers.get("Content-Type", "application/json")
+            self._send_bytes(exc.read(), content_type, status=exc.code, cors=True)
+        except Exception:
+            self._send_bytes(
+                json.dumps({"error": "submission API unavailable"}).encode(),
+                "application/json",
+                status=502,
+                cors=True,
+            )
 
     def _read_local_dashboard(self):
         try:
@@ -585,6 +644,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if self.path == "/health":
             self._send_bytes(b"ok", "text/plain")
             return
+        if self._is_submissions_api_path():
+            self._proxy_submissions_api("GET")
+            return
         if self.path == "/dashboard.json":
             try:
                 data = self._fetch_dashboard()
@@ -618,6 +680,24 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self._send_bytes(json.dumps({"error": "duel artifact unavailable"}).encode(), "application/json", status=502)
             return
         return super().do_GET()
+
+    def do_OPTIONS(self):
+        if self._is_submissions_api_path():
+            self.send_response(204)
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type, Accept")
+            self.send_header("Access-Control-Max-Age", "600")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        return super().do_OPTIONS()
+
+    def do_POST(self):
+        if self._is_submissions_api_path():
+            self._proxy_submissions_api("POST")
+            return
+        return super().do_POST()
 
 if __name__ == "__main__":
     with ThreadingHTTPServer(("0.0.0.0", PORT), Handler) as httpd:

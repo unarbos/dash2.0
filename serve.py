@@ -280,6 +280,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             "runtime_repo_url",
             "source",
             "share",
+            "king_since",
+            "accepted_at",
             "commitment",
             "commitment_block",
             "base_repo_full_name",

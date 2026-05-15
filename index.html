@@ -1188,6 +1188,7 @@ tbody tr:hover td { background: var(--surface-raised); }
 
 <script>
 const DATA_URLS = ['./dashboard-summary.json', './dashboard.json'];
+const SUBMISSIONS_URL = './api/submissions';
 const POLL_MS = 15_000;
 const MAIN_REPO_URL = 'https://github.com/unarbos/ninja';
 const noteCache = new Map();
@@ -1237,6 +1238,32 @@ function tipAttrs(label) {
 function compactRepo(repo) {
   if (!repo) return 'UNKNOWN';
   return String(repo).split('/')[0] || String(repo);
+}
+
+function isPrivateSubmissionRepo(repo, url) {
+  return String(repo || '').startsWith('private-submission/') || String(url || '').startsWith('private-submission://');
+}
+
+function privateSubmissionLabel(hotkey) {
+  return hotkey ? String(hotkey) : 'UNKNOWN HOTKEY';
+}
+
+function compactPrivateSubmissionLabel(label) {
+  return label.length > 34 ? label.slice(0, 18) + '..' + label.slice(-12) : label;
+}
+
+function participantRepoLink(repo, url, compact, noTooltip, uid, hotkey) {
+  if (isPrivateSubmissionRepo(repo, url)) {
+    const label = privateSubmissionLabel(hotkey);
+    const attrs = noTooltip ? '' : tipAttrs(label);
+    return '<span' + attrs + '>' + escapeHtml(compact ? compactPrivateSubmissionLabel(label) : label) + '</span>';
+  }
+  return repoLink(repo, url, compact, noTooltip);
+}
+
+function privateSubmissionIdFromRepo(repo) {
+  const text = String(repo || '');
+  return text.startsWith('private-submission/') ? text.slice('private-submission/'.length) : '';
 }
 
 function repoLink(repo, url, compact, noTooltip) {
@@ -1564,11 +1591,7 @@ function rowHoldingLabel(item, status, currentKing, duels) {
   if (sameMiner(item, currentKing) && status.king_since) return compactAge(status.king_since);
   const stamped = kingTimestamp(item);
   if (stamped != null) return compactAge(new Date(stamped).toISOString());
-  const appearances = arr(duels)
-    .filter((duel) => sameMiner(item, kingDuelRef(duel)))
-    .map((duel) => timestampMs(duel.started_at || duel.finished_at))
-    .filter((time) => time != null);
-  return appearances.length ? compactAge(new Date(Math.min(...appearances)).toISOString()) : '--';
+  return '--';
 }
 
 function heroKingMetrics(data, kings) {
@@ -1666,7 +1689,7 @@ function renderActiveDuel(status) {
     '<div class="race-grid">' +
       '<div class="combatant combatant--king"><div class="eyebrow">King</div><div class="repo">' + repoLink(kingRepo, active.king_pr_url || active.king_repo_url, false, true) + '</div><div class="detail">UID ' + uidCell(active.king_uid, active.king_hotkey, status.netuid) + '</div></div>' +
       '<div class="score-box"><div class="score-line">' + activeResultHtml(active, losses, ties, wins) + '</div><div class="score-caption">' + activeResultLabel(active) + '</div></div>' +
-      '<div class="combatant combatant--challenger"><div class="eyebrow">Challenger</div><div class="repo">' + repoLink(challengerRepo, active.challenger_pr_url || active.challenger_repo_url, false, true) + '</div><div class="detail">UID ' + uidCell(active.challenger_uid, active.challenger_hotkey, status.netuid) + '</div></div>' +
+      '<div class="combatant combatant--challenger"><div class="eyebrow">Challenger</div><div class="repo">' + participantRepoLink(challengerRepo, active.challenger_pr_url || active.challenger_repo_url, false, true, active.challenger_uid, active.challenger_hotkey) + '</div><div class="detail">UID ' + uidCell(active.challenger_uid, active.challenger_hotkey, status.netuid) + '</div></div>' +
     '</div>' +
     buildSegments(rounds, totalRounds) +
     '<div class="duel-context">' +
@@ -1688,7 +1711,7 @@ function renderQueue(queue, netuid) {
   }
   const rows = list.slice(0, 40).map((item, index) => {
     const pr = item.pr_url || (item.commit_sha ? MAIN_REPO_URL + '/pulls?q=' + encodeURIComponent(item.commit_sha) : MAIN_REPO_URL + '/pulls');
-    return '<tr><td class="num">' + String(index + 1).padStart(2, '0') + '</td><td class="num uid-col">' + uidCell(item.uid, item.hotkey, netuid) + '</td><td>' + repoLink(item.repo, pr, true) + '</td><td class="num">' + (item.commitment_block ? '#' + num(item.commitment_block) : '--') + '</td></tr>';
+    return '<tr><td class="num">' + String(index + 1).padStart(2, '0') + '</td><td class="num uid-col">' + uidCell(item.uid, item.hotkey, netuid) + '</td><td>' + participantRepoLink(item.repo, item.pr_url || item.repo_url || pr, true, false, item.uid, item.hotkey) + '</td><td class="num">' + (item.commitment_block ? '#' + num(item.commitment_block) : '--') + '</td></tr>';
   }).join('');
   $('queue-panel').innerHTML = '<div class="panel-title"><strong>Queue</strong> / ' + queueLabel + '</div><div class="table-wrap"><table class="data-table queue-table"><colgroup><col style="width:12%"><col style="width:16%"><col style="width:52%"><col style="width:20%"></colgroup><thead><tr><th class="num">#</th><th class="num uid-col">UID</th><th>Repo / PR</th><th class="num">Block</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
@@ -1697,10 +1720,11 @@ function duelWinner(duel) {
   const wins = Number(duel && duel.wins);
   const losses = Number(duel && duel.losses);
   if (!Number.isFinite(wins) || !Number.isFinite(losses)) return '';
-  const margin = Math.max(0, Number((lastData && lastData.status && lastData.status.scoring && lastData.status.scoring.win_margin) || 0));
-  if (wins >= losses + margin) return 'challenger';
-  if (losses >= wins + margin) return 'king';
-  return 'tie';
+  const rawMargin = lastData && lastData.status && lastData.status.scoring
+    ? lastData.status.scoring.win_margin
+    : null;
+  const margin = Math.max(0, Number(rawMargin ?? 3));
+  return wins - losses > margin ? 'challenger' : 'king';
 }
 
 function sameMinerStrict(a, b) {
@@ -1842,7 +1866,7 @@ function renderHistory(duels) {
     rows += '<tr>' +
       '<td class="num"><a class="duel-link" href="./duels.html?duel=' + encodeURIComponent(id) + '">' + escapeHtml(id) + '</a></td>' +
       '<td class="num uid-col">' + uidCell(duel.challenger_uid, duel.challenger_hotkey || duel.hotkey, lastData && lastData.status && lastData.status.netuid) + '</td>' +
-      '<td>' + repoLink(duel.challenger_repo, duel.challenger_pr_url || duel.challenger_repo_url, true) + '</td>' +
+      '<td>' + participantRepoLink(duel.challenger_repo, duel.challenger_pr_url || duel.challenger_repo_url, true, false, duel.challenger_uid, duel.challenger_hotkey || duel.hotkey) + '</td>' +
       '<td>' + outcomeTag(duel, retestSources.get(String(Number(duel.duel_id)))) + confirmationDetail(duel) + retestSourceDetail(retestSources.get(String(Number(duel.duel_id)))) + '</td>' +
       '<td class="num" title="' + escapeHtml(duelResultLabel(duel)) + '">' + duelResultHtml(duel) + '</td>' +
       '<td class="num">' + num(roundCount(duel)) + '</td>' +
@@ -2191,6 +2215,32 @@ function renderAll(data) {
   restoreUiState(uiState);
 }
 
+async function enrichPrivateSubmissionHotkeys(data) {
+  const status = data && data.status;
+  if (!status || typeof status !== 'object') return data;
+  const targets = [status.active_duel, ...arr(status.queue)].filter(Boolean);
+  const missing = targets.some((item) => isPrivateSubmissionRepo(item.challenger_repo || item.repo, item.challenger_repo_url || item.repo_url) && !(item.challenger_hotkey || item.hotkey));
+  if (!missing) return data;
+  try {
+    const response = await fetch(SUBMISSIONS_URL, { cache: 'no-store' });
+    if (!response.ok) return data;
+    const payload = await response.json();
+    const byId = new Map(arr(payload.submissions).map((item) => [String(item.submission_id || ''), item]));
+    for (const item of targets) {
+      const repo = item.challenger_repo || item.repo;
+      const submission = byId.get(privateSubmissionIdFromRepo(repo));
+      if (!submission) continue;
+      if (!item.challenger_hotkey && !item.hotkey) item.challenger_hotkey = submission.hotkey;
+      if (!item.hotkey) item.hotkey = submission.hotkey;
+      if (item.challenger_uid == null && item.uid == null && submission.uid != null) item.challenger_uid = submission.uid;
+      if (item.uid == null && submission.uid != null) item.uid = submission.uid;
+    }
+  } catch (_) {
+    // Keep the dashboard usable even if the optional submissions metadata is unavailable.
+  }
+  return data;
+}
+
 async function fetchAndRender() {
   try {
     let data = null;
@@ -2207,6 +2257,7 @@ async function fetchAndRender() {
     }
     if (!data) throw lastError || new Error('dashboard unavailable');
     if (!data || typeof data !== 'object') throw new Error('Invalid JSON');
+    data = await enrichPrivateSubmissionHotkeys(data);
     const duelsLink = $('duels-link');
     if (duelsLink) duelsLink.href = safeHref(dashboardLink(data, 'duels_html', './duels.html'), './duels.html');
     renderAll(data);

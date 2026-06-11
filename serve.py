@@ -10,6 +10,10 @@ import threading
 import re
 import time
 import gzip
+try:
+    import brotli
+except Exception:
+    brotli = None
 
 R2_URL = "https://us-east-1.hippius.com/constantinople/sn66/dashboard.json"
 R2_URL_FALLBACK = "https://s3.hippius.com/constantinople/sn66/dashboard.json"
@@ -24,6 +28,11 @@ LOCAL_DASHBOARD_PATH = os.environ.get(
     "DASHBOARD_DATA_PATH",
     DEFAULT_LOCAL_DASHBOARD_PATH,
 )
+DEFAULT_SWEBENCH_BENCHMARK_ROOT = "/home/const/subnet66/tau/workspace/validate/netuid-66/benchmarks/swebench-verified"
+SWEBENCH_BENCHMARK_ROOT = os.environ.get(
+    "SWEBENCH_BENCHMARK_ROOT",
+    DEFAULT_SWEBENCH_BENCHMARK_ROOT,
+)
 PUBLIC_BASE_URL = os.environ.get("R2_PUBLIC_URL", "https://s3.hippius.com/constantinople")
 SUBMISSIONS_API_UPSTREAM = os.environ.get(
     "SUBMISSIONS_API_UPSTREAM",
@@ -32,7 +41,10 @@ SUBMISSIONS_API_UPSTREAM = os.environ.get(
 
 
 _dashboard_cache = {"data": None, "ts": 0}
-_dashboard_summary_cache = {"data": None, "ts": 0}
+_dashboard_summary_cache = {"data": None, "ts": 0, "local_mtime": None}
+_dashboard_home_cache = {"data": None, "ts": 0, "local_mtime": None}
+_dashboard_payload_cache = {"payload": None, "local_mtime": None}
+_swebench_cache = {"data": None, "ts": 0, "latest_mtime": None}
 _duel_index_cache = {"data": None, "ts": 0}
 _duel_cache = {}
 _cache_lock = threading.Lock()
@@ -65,9 +77,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             pass
         elif route == "/api/submissions":
             self.send_header("Cache-Control", "no-cache, max-age=0")
-        elif route == "/dashboard-summary.json":
+        elif route in ("/dashboard-home.json", "/dashboard-summary.json"):
             self.send_header("Cache-Control", "no-cache, max-age=0")
         elif route == "/dashboard.json":
+            self.send_header("Cache-Control", "no-cache, max-age=0")
+        elif route == "/swebench-local.json":
             self.send_header("Cache-Control", "no-cache, max-age=0")
         elif route == "/duels/index.json":
             self.send_header("Cache-Control", "no-cache, max-age=60")
@@ -91,7 +105,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             data = data.encode()
         headers = {}
         accept_encoding = self.headers.get("Accept-Encoding", "")
-        if len(data) > 1024 and "gzip" in accept_encoding.lower():
+        if len(data) > 1024 and brotli is not None and "br" in accept_encoding.lower():
+            data = brotli.compress(data, quality=5)
+            headers["Content-Encoding"] = "br"
+            headers["Vary"] = "Accept-Encoding"
+        elif len(data) > 1024 and "gzip" in accept_encoding.lower():
             data = gzip.compress(data, compresslevel=5)
             headers["Content-Encoding"] = "gzip"
             headers["Vary"] = "Accept-Encoding"
@@ -253,6 +271,186 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return None
         return {field: source.get(field) for field in fields if field in source}
 
+    def _read_json_file(self, path):
+        with open(path, "rb") as f:
+            return json.loads(f.read())
+
+    def _latest_swebench_path(self):
+        return os.path.join(SWEBENCH_BENCHMARK_ROOT, "latest.json")
+
+    def _mini_swe_usage_from_trajectories(self, outputs_dir):
+        if not os.path.isdir(outputs_dir):
+            return None
+        totals = {
+            "cost": 0.0,
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "total_tokens": 0,
+            "trajectory_count": 0,
+        }
+        for name in sorted(os.listdir(outputs_dir)):
+            trajectory_path = os.path.join(outputs_dir, name, "trajectory.json")
+            if not os.path.isfile(trajectory_path):
+                continue
+            try:
+                payload = self._read_json_file(trajectory_path)
+            except Exception:
+                continue
+            totals["trajectory_count"] += 1
+            for item in self._walk_json_objects(payload):
+                usage = item.get("usage") if isinstance(item, dict) else None
+                if not isinstance(usage, dict):
+                    continue
+                cost = usage.get("cost")
+                if isinstance(cost, (int, float)):
+                    totals["cost"] += float(cost)
+                for key in ("prompt_tokens", "completion_tokens", "total_tokens"):
+                    value = usage.get(key)
+                    if isinstance(value, (int, float)):
+                        totals[key] += int(value)
+        if totals["trajectory_count"] == 0:
+            return None
+        totals["cost_available"] = totals["cost"] > 0
+        return totals
+
+    def _mini_swe_usage_from_comparison(self, comparison):
+        king_sha = str(comparison.get("king_commit_sha") or "")
+        if not king_sha:
+            return None
+        outputs_dir = os.path.join(
+            SWEBENCH_BENCHMARK_ROOT,
+            king_sha,
+            "mini-swe-agent",
+            "mini_outputs",
+        )
+        local_usage = self._mini_swe_usage_from_trajectories(outputs_dir)
+        if local_usage is not None:
+            return local_usage
+        scores = comparison.get("scores") if isinstance(comparison.get("scores"), dict) else {}
+        baseline_score = scores.get("baseline") if isinstance(scores.get("baseline"), dict) else scores.get("pi")
+        report_path = str((baseline_score or {}).get("report_path") or "")
+        official_dir = os.path.dirname(report_path)
+        if os.path.basename(official_dir) != "official_scoring":
+            return None
+        return self._mini_swe_usage_from_trajectories(os.path.join(os.path.dirname(official_dir), "mini_outputs"))
+
+    def _walk_json_objects(self, value):
+        if isinstance(value, dict):
+            yield value
+            for child in value.values():
+                yield from self._walk_json_objects(child)
+        elif isinstance(value, list):
+            for child in value:
+                yield from self._walk_json_objects(child)
+
+    def _compact_swebench_payload(self, comparison):
+        if not isinstance(comparison, dict):
+            return {}
+        scores = comparison.get("scores") if isinstance(comparison.get("scores"), dict) else {}
+        usage = comparison.get("usage") if isinstance(comparison.get("usage"), dict) else {}
+        baseline = comparison.get("baseline") if isinstance(comparison.get("baseline"), dict) else comparison.get("pi")
+        mini_usage = self._mini_swe_usage_from_comparison(comparison)
+        baseline_usage = usage.get("baseline") if isinstance(usage.get("baseline"), dict) else usage.get("pi")
+        return {
+            "status": comparison.get("status"),
+            "benchmark": comparison.get("benchmark"),
+            "started_at": comparison.get("started_at"),
+            "finished_at": comparison.get("finished_at"),
+            "king_commit_sha": comparison.get("king_commit_sha"),
+            "king": comparison.get("king"),
+            "baseline": baseline,
+            "model": comparison.get("model"),
+            "provider_only": comparison.get("provider_only"),
+            "manifest": comparison.get("manifest"),
+            "elapsed": comparison.get("elapsed"),
+            "scores": scores,
+            "usage": {
+                "king": usage.get("king"),
+                "baseline": mini_usage or baseline_usage,
+                "cost_available": bool(
+                    usage.get("king", {}).get("cost_available")
+                    and (mini_usage or baseline_usage or {}).get("cost_available")
+                ),
+            },
+        }
+
+    def _line_count(self, path):
+        try:
+            with open(path, "rb") as f:
+                return sum(1 for _ in f)
+        except OSError:
+            return 0
+
+    def _compact_swebench_job(self, job_path):
+        try:
+            job = self._read_json_file(job_path)
+        except Exception:
+            return None
+        if not isinstance(job, dict):
+            return None
+        job_dir = os.path.dirname(job_path)
+        king = job.get("king") if isinstance(job.get("king"), dict) else {}
+        comparison = job.get("comparison") if isinstance(job.get("comparison"), dict) else None
+        payload = self._compact_swebench_payload(comparison) if comparison else {}
+        payload.update({
+            "status": job.get("status") or payload.get("status"),
+            "started_at": job.get("started_at") or payload.get("started_at"),
+            "updated_at": job.get("updated_at"),
+            "error": job.get("error"),
+            "king": payload.get("king") or king,
+            "king_commit_sha": payload.get("king_commit_sha") or king.get("commit_sha"),
+            "progress": {
+                "baseline_solve_results": self._line_count(os.path.join(job_dir, "mini-swe-agent", "solve_results.jsonl")),
+                "baseline_predictions": self._line_count(os.path.join(job_dir, "mini-swe-agent", "predictions.jsonl")),
+                "king_solve_results": self._line_count(os.path.join(job_dir, "king", "solve_results.jsonl")),
+                "king_predictions": self._line_count(os.path.join(job_dir, "king", "predictions.jsonl")),
+                "total": 50,
+            },
+        })
+        return payload
+
+    def _latest_swebench_job(self):
+        if not os.path.isdir(SWEBENCH_BENCHMARK_ROOT):
+            return None
+        jobs = []
+        for name in os.listdir(SWEBENCH_BENCHMARK_ROOT):
+            job_path = os.path.join(SWEBENCH_BENCHMARK_ROOT, name, "job.json")
+            try:
+                jobs.append((os.path.getmtime(job_path), job_path))
+            except OSError:
+                continue
+        if not jobs:
+            return None
+        return self._compact_swebench_job(max(jobs, key=lambda item: item[0])[1])
+
+    def _fetch_swebench_local(self):
+        latest_path = self._latest_swebench_path()
+        try:
+            latest_mtime = os.path.getmtime(latest_path)
+        except OSError:
+            latest_mtime = None
+        now = time.monotonic()
+        with _cache_lock:
+            if (
+                _swebench_cache["data"] is not None
+                and _swebench_cache["latest_mtime"] == latest_mtime
+                and (now - _swebench_cache["ts"]) < CACHE_TTL
+            ):
+                return _swebench_cache["data"]
+        if latest_mtime is None:
+            data = json.dumps({"latest": None, "active": self._latest_swebench_job()}).encode()
+        else:
+            comparison = self._read_json_file(latest_path)
+            data = json.dumps({
+                "latest": self._compact_swebench_payload(comparison),
+                "active": self._latest_swebench_job(),
+            }).encode()
+        with _cache_lock:
+            _swebench_cache["data"] = data
+            _swebench_cache["ts"] = now
+            _swebench_cache["latest_mtime"] = latest_mtime
+        return data
+
     def _round_count(self, source):
         if not isinstance(source, dict):
             return 0
@@ -266,6 +464,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         fields = (
             "uid",
             "hotkey",
+            "agent_username",
+            "coldkey",
             "repo",
             "repo_full_name",
             "repo_url",
@@ -281,6 +481,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             "source",
             "share",
             "king_since",
+            "king_duels_defended",
+            "hold_seconds",
             "accepted_at",
             "commitment",
             "commitment_block",
@@ -315,6 +517,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             "duel_rounds",
             "king_uid",
             "king_hotkey",
+            "king_agent_username",
             "king_repo",
             "king_repo_url",
             "king_pr_url",
@@ -322,6 +525,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             "king_commitment_block",
             "challenger_uid",
             "challenger_hotkey",
+            "challenger_agent_username",
             "hotkey",
             "challenger_repo",
             "challenger_repo_url",
@@ -340,11 +544,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             "status",
             "challenger_uid",
             "challenger_hotkey",
+            "challenger_agent_username",
             "challenger_repo",
             "challenger_repo_url",
             "challenger_pr_url",
             "king_uid",
             "king_hotkey",
+            "king_agent_username",
             "king_repo",
             "king_repo_url",
             "king_pr_url",
@@ -419,6 +625,73 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             "status": self._status_summary(payload.get("status") or {}),
             "links": {**links, "duels_html": "./duels.html"},
         }
+
+    def _summarize_home_payload(self, payload):
+        if not isinstance(payload, dict):
+            return payload
+        duels = payload.get("duels", [])
+        recent_duels = duels[-40:] if isinstance(duels, list) else []
+        links = payload.get("links") if isinstance(payload.get("links"), dict) else {}
+        return {
+            "updated_at": payload.get("updated_at"),
+            "current_king": self._submission_summary(payload.get("current_king")),
+            "duels": [
+                self._duel_summary(item)
+                for item in recent_duels
+                if isinstance(item, dict)
+            ],
+            "duels_total": len(duels) if isinstance(duels, list) else 0,
+            "status": self._status_summary(payload.get("status") or {}),
+            "links": {**links, "duels_html": "./duels.html", "dashboard_summary": "./dashboard-summary.json"},
+        }
+
+    def _dashboard_payload_from_local_or_remote(self):
+        local_mtime = None
+        try:
+            local_mtime = os.path.getmtime(LOCAL_DASHBOARD_PATH)
+        except Exception:
+            local_mtime = None
+
+        with _cache_lock:
+            cached = _dashboard_payload_cache.get("payload")
+            if cached is not None and local_mtime is not None and _dashboard_payload_cache.get("local_mtime") == local_mtime:
+                return cached, local_mtime
+
+        try:
+            with open(LOCAL_DASHBOARD_PATH, "rb") as f:
+                payload = json.loads(f.read())
+        except Exception:
+            dashboard_data = self._fetch_dashboard()
+            payload = json.loads(dashboard_data)
+
+        with _cache_lock:
+            _dashboard_payload_cache["payload"] = payload
+            _dashboard_payload_cache["local_mtime"] = local_mtime
+        return payload, local_mtime
+
+    def _json_cache_for_dashboard(self, cache, summarizer):
+        now = time.monotonic()
+        with _cache_lock:
+            if cache["data"] and (now - cache["ts"]) < CACHE_TTL:
+                return cache["data"]
+
+        local_mtime = None
+        try:
+            local_mtime = os.path.getmtime(LOCAL_DASHBOARD_PATH)
+        except Exception:
+            local_mtime = None
+        with _cache_lock:
+            if cache["data"] and local_mtime is not None and cache.get("local_mtime") == local_mtime:
+                cache["ts"] = now
+                return cache["data"]
+
+        payload, local_mtime = self._dashboard_payload_from_local_or_remote()
+        data = json.dumps(summarizer(payload), separators=(",", ":")).encode()
+        with _cache_lock:
+            cache["data"] = data
+            cache["ts"] = now
+            cache["local_mtime"] = local_mtime
+        return data
 
     def _augment_dashboard_links(self, data):
         try:
@@ -550,19 +823,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return data
 
     def _fetch_dashboard_summary(self):
-        now = time.monotonic()
-        with _cache_lock:
-            if _dashboard_summary_cache["data"] and (now - _dashboard_summary_cache["ts"]) < CACHE_TTL:
-                return _dashboard_summary_cache["data"]
+        return self._json_cache_for_dashboard(_dashboard_summary_cache, self._summarize_dashboard_payload)
 
-        dashboard_data = self._fetch_dashboard()
-        payload = json.loads(dashboard_data)
-        summary = self._summarize_dashboard_payload(payload)
-        data = json.dumps(summary, separators=(",", ":")).encode()
-        with _cache_lock:
-            _dashboard_summary_cache["data"] = data
-            _dashboard_summary_cache["ts"] = now
-        return data
+    def _fetch_dashboard_home(self):
+        return self._json_cache_for_dashboard(_dashboard_home_cache, self._summarize_home_payload)
 
     def _fetch_duel_index(self):
         now = time.monotonic()
@@ -598,6 +862,37 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             _duel_index_cache["data"] = data
             _duel_index_cache["ts"] = now
         return data
+
+    def _paginate_duel_index(self, data):
+        parsed = urllib.parse.urlsplit(self.path)
+        params = urllib.parse.parse_qs(parsed.query)
+        try:
+            limit = int((params.get("limit") or ["0"])[0])
+        except (TypeError, ValueError):
+            limit = 0
+        before = (params.get("before") or [""])[0]
+        if limit <= 0 and not before:
+            return data
+
+        payload = json.loads(data)
+        duels = payload.get("duels", [])
+        if before:
+            try:
+                before_id = int(before)
+                duels = [item for item in duels if int(item.get("duel_id", 0)) < before_id]
+            except (TypeError, ValueError):
+                pass
+        if limit > 0:
+            duels = duels[-limit:]
+
+        payload["duels"] = duels
+        payload["page"] = {
+            "limit": limit or None,
+            "before": before or None,
+            "count": len(duels),
+            "next_before": min((int(item.get("duel_id", 0)) for item in duels), default=0) or None,
+        }
+        return json.dumps(payload, separators=(",", ":")).encode()
 
     def _fetch_duel(self, duel_id):
         now = time.monotonic()
@@ -643,34 +938,49 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return data
 
     def do_GET(self):
-        if self.path == "/health":
+        route = urllib.parse.urlsplit(self.path).path.rstrip("/") or "/"
+        if route == "/health":
             self._send_bytes(b"ok", "text/plain")
             return
         if self._is_submissions_api_path():
             self._proxy_submissions_api("GET")
             return
-        if self.path == "/dashboard.json":
+        if route == "/dashboard.json":
             try:
                 data = self._fetch_dashboard()
                 self._send_bytes(data, "application/json", cors=True)
             except Exception as e:
                 self._send_bytes(json.dumps({"error": "dashboard unavailable"}).encode(), "application/json", status=502)
             return
-        if self.path == "/dashboard-summary.json":
+        if route == "/dashboard-home.json":
+            try:
+                data = self._fetch_dashboard_home()
+                self._send_bytes(data, "application/json", cors=True)
+            except Exception:
+                self._send_bytes(json.dumps({"error": "dashboard home unavailable"}).encode(), "application/json", status=502)
+            return
+        if route == "/dashboard-summary.json":
             try:
                 data = self._fetch_dashboard_summary()
                 self._send_bytes(data, "application/json", cors=True)
             except Exception:
                 self._send_bytes(json.dumps({"error": "dashboard summary unavailable"}).encode(), "application/json", status=502)
             return
-        if self.path == "/duels/index.json":
+        if route == "/swebench-local.json":
             try:
-                data = self._fetch_duel_index()
+                data = self._fetch_swebench_local()
+                self._send_bytes(data, "application/json", cors=True)
+            except Exception:
+                self._send_bytes(json.dumps({"error": "swebench local unavailable"}).encode(), "application/json", status=502)
+            return
+        if route == "/duels/index.json":
+            try:
+                data = self._paginate_duel_index(self._fetch_duel_index())
                 self._send_bytes(data, "application/json", cors=True)
             except Exception:
                 self._send_bytes(json.dumps({"error": "duel index unavailable"}).encode(), "application/json", status=502)
             return
-        match = DUEL_PATH_RE.match(self.path)
+        match = DUEL_PATH_RE.match(route)
         if match:
             duel_id = match.group(1).zfill(6)
             try:

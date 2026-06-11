@@ -201,14 +201,14 @@ button:disabled { cursor: default; opacity: 0.45; }
 .hero-table .metric-col {
   text-align: right;
 }
-.hero-table .repo-col a,
+.hero-table .username-col span,
 .hero-table .key-cell .copy-wrap,
 .hero-table .key-cell .copy-link,
 .hero-table .key-cell span:first-child {
   max-width: 100%;
   min-width: 0;
 }
-.hero-table .repo-col a,
+.hero-table .username-col span,
 .hero-table .key-cell .copy-link,
 .hero-table .key-cell span:first-child {
   display: inline-block;
@@ -441,6 +441,55 @@ button:disabled { cursor: default; opacity: 0.45; }
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+.bench-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, auto) minmax(0, 1fr);
+  gap: var(--space-md);
+  align-items: stretch;
+}
+.bench-agent {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--black);
+}
+.bench-agent--right { text-align: right; }
+.bench-name {
+  color: var(--text-secondary);
+  font: 700 10px/1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.bench-score {
+  margin-top: 7px;
+  color: var(--text-display);
+  font: 400 clamp(24px, 3vw, 42px)/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.bench-detail {
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font: 400 10px/1.35 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.bench-delta {
+  align-self: center;
+  min-width: 120px;
+  color: var(--text-primary);
+  font: 700 11px/1.3 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.bench-progress {
+  margin-top: var(--space-sm);
+  color: var(--text-secondary);
+  font: 400 10px/1.35 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 .segment-bar {
   display: grid;
   grid-template-columns: repeat(var(--segments, 50), minmax(4px, 1fr));
@@ -585,6 +634,10 @@ tbody tr:hover td { background: var(--surface-raised); }
 }
 .confirmation-detail a {
   color: var(--text-display);
+}
+.confirmation-detail.dq-detail {
+  text-transform: none;
+  letter-spacing: 0;
 }
 .history-table {
   --table-min: 820px;
@@ -992,6 +1045,14 @@ tbody tr:hover td { background: var(--surface-raised); }
     grid-template-columns: 1fr;
     gap: var(--space-sm);
   }
+  .bench-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+  .bench-agent--right,
+  .bench-delta {
+    text-align: left;
+  }
   .combatant--challenger {
     text-align: left;
   }
@@ -1143,6 +1204,9 @@ tbody tr:hover td { background: var(--surface-raised); }
     <div class="hero-body" id="king-stats">
       <div class="stat-row"><span class="label">State</span><span class="value">[LOADING]</span></div>
     </div>
+    <div class="hero-status-strip" id="pool-rebuild-status">
+      <span>Task pools <b>LOADING</b></span>
+    </div>
   </section>
 
   <section class="section" aria-labelledby="race-heading">
@@ -1152,6 +1216,16 @@ tbody tr:hover td { background: var(--surface-raised); }
     </div>
     <div class="card" id="active-duel">
       <div class="empty">[LOADING ACTIVE DUEL]</div>
+    </div>
+  </section>
+
+  <section class="section" id="swebench-section" aria-labelledby="swebench-heading">
+    <div class="section-head">
+      <div class="section-title" id="swebench-heading"><strong>SWE-bench Verified</strong> / sample-50</div>
+      <div class="section-meta" id="swebench-meta">LOCAL ONLY</div>
+    </div>
+    <div class="card" id="swebench-panel">
+      <div class="empty">[LOADING SWE-BENCH]</div>
     </div>
   </section>
 
@@ -1187,8 +1261,48 @@ tbody tr:hover td { background: var(--surface-raised); }
 </main>
 
 <script>
-const DATA_URLS = ['./dashboard-summary.json', './dashboard.json'];
+const DATA_URLS = [
+  { url: './dashboard-home.json', timeoutMs: 12_000 },
+  { url: './dashboard-summary.json', timeoutMs: 15_000 },
+  { url: './dashboard.json', timeoutMs: 30_000 }
+];
+const FULL_DATA_URL = './dashboard-summary.json';
 const SUBMISSIONS_URL = './api/submissions';
+const SWEBENCH_URL = '/swebench-local.json';
+const SWEBENCH_PUBLIC_SNAPSHOT = {
+  latest: {
+    status: 'completed',
+    benchmark: 'swebench_verified_sample_50',
+    started_at: '2026-05-30T16:55:37.190863+00:00',
+    finished_at: '2026-05-30T17:20:48.582218+00:00',
+    king_commit_sha: 'd15692a3d52276936b4a1f4c1d0dbbfcac69f500',
+    model: 'minimax/minimax-m2.7',
+    provider_only: 'minimax/fp8',
+    baseline: {
+      name: 'mini-swe-agent',
+      repo_url: 'https://github.com/SWE-agent/mini-swe-agent',
+      commit_sha: 'adfe20233d456104c38c3129161b54f0fd39f2c7'
+    },
+    elapsed: {
+      wall_seconds: 1511.391206049826
+    },
+    scores: {
+      king: { error: null, resolved_count: 14, total_count: 50, pass_rate: 0.28 },
+      baseline: { error: null, resolved_count: 24, total_count: 50, pass_rate: 0.48 },
+      delta_pass_rate: -0.2
+    },
+    usage: {
+      king: { cost: 3.19589472, cost_available: true },
+      baseline: { cost: 4.883135209, cost_available: true },
+      cost_available: true
+    },
+    progress: {
+      baseline_predictions: 50,
+      king_predictions: 50,
+      total: 50
+    }
+  }
+};
 const POLL_MS = 15_000;
 const MAIN_REPO_URL = 'https://github.com/unarbos/ninja';
 const noteCache = new Map();
@@ -1196,6 +1310,20 @@ const openNotes = new Set();
 let lastData = null;
 let retryTimer = null;
 let historySearchQuery = '';
+
+function fetchWithTimeout(url, options, timeoutMs) {
+  if (!('AbortController' in window)) return fetch(url, options);
+  const controller = new AbortController();
+  const timeoutError = new Error('Timed out loading ' + url + ' after ' + Math.round(timeoutMs / 1000) + 's');
+  timeoutError.name = 'TimeoutError';
+  const timer = setTimeout(() => controller.abort(timeoutError), timeoutMs);
+  return fetch(url, { ...(options || {}), signal: controller.signal })
+    .catch((error) => {
+      if (controller.signal.aborted) throw controller.signal.reason || timeoutError;
+      throw error;
+    })
+    .finally(() => clearTimeout(timer));
+}
 
 const $ = (id) => document.getElementById(id);
 const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
@@ -1241,20 +1369,35 @@ function compactRepo(repo) {
 }
 
 function isPrivateSubmissionRepo(repo, url) {
-  return String(repo || '').startsWith('private-submission/') || String(url || '').startsWith('private-submission://');
+  const name = String(repo || '');
+  return name === 'private-submission' || name.startsWith('private-submission/') || String(url || '').startsWith('private-submission://');
 }
 
-function privateSubmissionLabel(hotkey) {
-  return hotkey ? String(hotkey) : 'UNKNOWN HOTKEY';
+function privateSubmissionLabel(hotkey, username) {
+  return username ? String(username) : hotkey ? String(hotkey) : 'UNKNOWN HOTKEY';
 }
 
 function compactPrivateSubmissionLabel(label) {
   return label.length > 34 ? label.slice(0, 18) + '..' + label.slice(-12) : label;
 }
 
-function participantRepoLink(repo, url, compact, noTooltip, uid, hotkey) {
+function participantDisplayName(item, repo, url, hotkey) {
+  const username = item && (item.agent_username || item.username || item.challenger_agent_username || item.king_agent_username);
+  if (username) return String(username);
+  if (isPrivateSubmissionRepo(repo, url)) return privateSubmissionLabel(hotkey);
+  return repo ? String(repo) : hotkey ? String(hotkey) : 'UNKNOWN';
+}
+
+function participantNameText(item, compact) {
+  const repo = repoName(item);
+  const label = participantDisplayName(item, repo, item && item.repo_url, item && item.hotkey);
+  if (compact && isPrivateSubmissionRepo(repo, item && item.repo_url)) return compactPrivateSubmissionLabel(label);
+  return compact && !isPrivateSubmissionRepo(repo, item && item.repo_url) ? compactRepo(label) : label;
+}
+
+function participantRepoLink(repo, url, compact, noTooltip, uid, hotkey, agentUsername) {
   if (isPrivateSubmissionRepo(repo, url)) {
-    const label = privateSubmissionLabel(hotkey);
+    const label = privateSubmissionLabel(hotkey, agentUsername);
     const attrs = noTooltip ? '' : tipAttrs(label);
     return '<span' + attrs + '>' + escapeHtml(compact ? compactPrivateSubmissionLabel(label) : label) + '</span>';
   }
@@ -1384,7 +1527,9 @@ function activeResultHtml(active, losses, ties, wins) {
 
 function activeScoredRoundCount(active, wins, losses, ties) {
   const rounds = arr(active && active.rounds);
-  if (rounds.length) return rounds.length;
+  if (rounds.length) {
+    return rounds.filter(round => ['king', 'challenger', 'tie', 'error'].includes(String(round && round.winner || ''))).length;
+  }
   const errors = Number((active && active.errors) || 0);
   return wins + losses + ties + (Number.isFinite(errors) ? errors : 0);
 }
@@ -1503,15 +1648,40 @@ function renderStat(label, value, cls) {
   return '<div class="stat-row"><span class="label">' + escapeHtml(label) + '</span><span class="value ' + (cls || '') + '">' + value + '</span></div>';
 }
 
+function poolStatusClass(pool) {
+  if (!pool) return 'status-warn';
+  return pool.ready ? 'status-ok' : 'status-warn';
+}
+
+function renderPoolRebuild(data) {
+  const rebuild = data && data.pool_rebuild;
+  if (!rebuild || !Array.isArray(rebuild.pools)) {
+    $('pool-rebuild-status').innerHTML = '<span>Task pools <b class="status-warn">UNKNOWN</b></span>';
+    return;
+  }
+  const poolParts = rebuild.pools.map((pool) =>
+    '<span>' + escapeHtml(pool.label || 'pool') + ' <b class="' + poolStatusClass(pool) + '">' + num(pool.count) + '/' + num(pool.target) + '</b></span>'
+  );
+  const readyText = rebuild.ready ? 'READY' : 'REBUILDING';
+  const readyClass = rebuild.ready ? 'status-ok' : 'status-warn';
+  $('pool-rebuild-status').innerHTML = [
+    '<span>Task pools <b class="' + readyClass + '">' + readyText + '</b></span>',
+    '<span>Total <b>' + num(rebuild.count) + '/' + num(rebuild.target) + '</b></span>',
+    '<span>Progress <b>' + pct(rebuild.progress, 0) + '</b></span>',
+    ...poolParts,
+    '<span>Checked <b>' + escapeHtml(compactAge(rebuild.updated_at)) + '</b></span>'
+  ].join('');
+}
+
 function renderHeroKingRow(item, index, featured, status, metrics) {
   const isFeatured = sameMiner(item, featured);
   const metric = metrics.get(item) || {};
+  const name = participantNameText(item, false);
   return '<tr class="' + (isFeatured ? 'is-current' : '') + '">' +
     '<td class="num slot-col">' + String(index + 1).padStart(2, '0') + '</td>' +
     '<td class="num uid-col">' + uidCell(item.uid, item.hotkey, status.netuid) + '</td>' +
-    '<td class="repo-col">' + repoLink(repoName(item), item.pr_url || item.repo_url, true) + '</td>' +
+    '<td class="username-col"><span' + tipAttrs(name) + '>' + escapeHtml(name) + '</span></td>' +
     '<td class="mono key-cell">' + hotkeyLink(item.hotkey, status.netuid) + '</td>' +
-    '<td class="mono key-cell">' + commitLink(item) + '</td>' +
     '<td class="mono metric-col">' + escapeHtml(metric.defenses) + '</td>' +
     '<td class="mono metric-col">' + escapeHtml(metric.holding) + '</td>' +
   '</tr>';
@@ -1564,6 +1734,7 @@ function sameMiner(a, b) {
   if (aHotkey && bHotkey && String(aHotkey) === String(bHotkey)) return true;
   const aRepo = repoName(a) || a.king_repo || a.challenger_repo;
   const bRepo = repoName(b) || b.king_repo || b.challenger_repo;
+  if (isPrivateSubmissionRepo(aRepo, a.repo_url || a.king_repo_url || a.challenger_repo_url) || isPrivateSubmissionRepo(bRepo, b.repo_url || b.king_repo_url || b.challenger_repo_url)) return false;
   return !!aRepo && !!bRepo && String(aRepo) === String(bRepo);
 }
 
@@ -1587,8 +1758,55 @@ function compactAge(iso) {
   return label.endsWith(' AGO') ? label.slice(0, -4) : label;
 }
 
+function compactDuration(ms) {
+  if (!Number.isFinite(ms) || ms < 0) return '--';
+  const totalMinutes = Math.max(0, Math.floor(ms / 60000));
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  if (days > 0) return days + 'D ' + hours + 'H';
+  if (hours > 0) return hours + 'H ' + minutes + 'M';
+  return minutes + 'M';
+}
+
+function duelFinishedMs(duel) {
+  return timestampMs(duel && (duel.finished_at || duel.started_at));
+}
+
+function challengerDuelRef(duel) {
+  return {
+    uid: duel && (duel.challenger_uid ?? duel.uid),
+    hotkey: duel && (duel.challenger_hotkey || duel.hotkey),
+    repo: duel && duel.challenger_repo
+  };
+}
+
+function inferredReignBounds(item, duels) {
+  const sorted = arr(duels)
+    .map((duel) => ({ duel, time: duelFinishedMs(duel) }))
+    .filter((entry) => entry.time != null)
+    .sort((a, b) => a.time - b.time);
+  const starts = sorted.filter(({ duel }) => duel.king_replaced && !duel.disqualification_reason && sameMiner(item, challengerDuelRef(duel)));
+  const startEntry = starts[starts.length - 1];
+  if (!startEntry) return null;
+  const endEntry = sorted.find(({ duel, time }) => time > startEntry.time && duel.king_replaced && !duel.disqualification_reason && sameMiner(item, kingDuelRef(duel)));
+  return {
+    start: startEntry.time,
+    end: endEntry ? endEntry.time : null
+  };
+}
+
 function rowHoldingLabel(item, status, currentKing, duels) {
-  if (sameMiner(item, currentKing) && status.king_since) return compactAge(status.king_since);
+  const isCurrent = sameMinerStrict(item, currentKing);
+  const currentStart = timestampMs(status && status.king_since);
+  if (isCurrent && currentStart != null) return compactDuration(Date.now() - currentStart);
+
+  const holdSeconds = Number(item && item.hold_seconds);
+  if (Number.isFinite(holdSeconds) && holdSeconds >= 0) return compactDuration(holdSeconds * 1000);
+
+  const inferred = inferredReignBounds(item, duels);
+  if (inferred) return compactDuration((inferred.end || Date.now()) - inferred.start);
+
   const stamped = kingTimestamp(item);
   if (stamped != null) return compactAge(new Date(stamped).toISOString());
   return '--';
@@ -1599,7 +1817,11 @@ function heroKingMetrics(data, kings) {
   const duels = arr(data.duels);
   const metrics = new Map();
   for (const king of kings) {
-    const defenses = duels.filter((duel) => kingDefenseDuel(duel) && sameMiner(king, kingDuelRef(duel))).length;
+    const isCurrent = sameMinerStrict(king, data.current_king);
+    const publishedDefenses = Number(king.king_duels_defended);
+    const defenses = Number.isFinite(publishedDefenses)
+      ? publishedDefenses
+      : duels.filter((duel) => kingDefenseDuel(duel) && sameMiner(king, kingDuelRef(duel))).length;
     metrics.set(king, {
       defenses: num(defenses),
       holding: rowHoldingLabel(king, status, data.current_king, duels)
@@ -1639,6 +1861,30 @@ function renderShellError(message) {
   $('king-stats').innerHTML = '<div class="error-box">[ERROR] ' + escapeHtml(message) + '</div>';
 }
 
+function scheduleIdle(callback) {
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(callback, { timeout: 1200 });
+    return;
+  }
+  setTimeout(callback, 0);
+}
+
+function isPartialDashboard(data) {
+  return data && data.duels_total != null && arr(data.duels).length < Number(data.duels_total);
+}
+
+function duelTotal(data) {
+  const duels = arr(data && data.duels);
+  return data && data.duels_total != null ? Number(data.duels_total) || duels.length : duels.length;
+}
+
+function footerStatusText(data) {
+  const status = data.status || {};
+  const duels = arr(data.duels);
+  const rounds = status.total_rounds || duels.reduce((sum, duel) => sum + roundCount(duel), 0);
+  return duelTotal(data) + ' DUELS | ' + num(rounds) + ' ROUNDS | ' + num(status.miners_seen) + ' MINERS SEEN';
+}
+
 function renderKing(data) {
   const status = data.status || {};
   const king = data.current_king;
@@ -1658,7 +1904,7 @@ function renderKing(data) {
   $('king-heading').textContent = 'Kings';
   $('king-copy').textContent = slotSummary;
   $('king-stats').innerHTML =
-    '<div class="hero-table-wrap"><table class="hero-table"><colgroup><col style="width:6%"><col style="width:8%"><col style="width:27%"><col style="width:25%"><col style="width:20%"><col style="width:7%"><col style="width:7%"></colgroup><thead><tr><th class="num slot-col">Slot</th><th class="num uid-col">UID</th><th class="repo-col">Repo</th><th class="mono key-cell">Hotkey</th><th class="mono key-cell">Commit</th><th class="mono metric-col tip" data-tooltip="Defenses" aria-label="Defenses">Def</th><th class="mono metric-col">Hold</th></tr></thead><tbody>' + slotRows + '</tbody></table></div>';
+    '<div class="hero-table-wrap"><table class="hero-table"><colgroup><col style="width:7%"><col style="width:10%"><col style="width:34%"><col style="width:27%"><col style="width:10%"><col style="width:12%"></colgroup><thead><tr><th class="num slot-col">Slot</th><th class="num uid-col">UID</th><th class="username-col">Username</th><th class="mono key-cell">Hotkey</th><th class="mono metric-col tip" data-tooltip="Defenses" aria-label="Defenses">Def</th><th class="mono metric-col">Hold</th></tr></thead><tbody>' + slotRows + '</tbody></table></div>';
 }
 
 function renderActiveDuel(status) {
@@ -1689,7 +1935,7 @@ function renderActiveDuel(status) {
     '<div class="race-grid">' +
       '<div class="combatant combatant--king"><div class="eyebrow">King</div><div class="repo">' + repoLink(kingRepo, active.king_pr_url || active.king_repo_url, false, true) + '</div><div class="detail">UID ' + uidCell(active.king_uid, active.king_hotkey, status.netuid) + '</div></div>' +
       '<div class="score-box"><div class="score-line">' + activeResultHtml(active, losses, ties, wins) + '</div><div class="score-caption">' + activeResultLabel(active) + '</div></div>' +
-      '<div class="combatant combatant--challenger"><div class="eyebrow">Challenger</div><div class="repo">' + participantRepoLink(challengerRepo, active.challenger_pr_url || active.challenger_repo_url, false, true, active.challenger_uid, active.challenger_hotkey) + '</div><div class="detail">UID ' + uidCell(active.challenger_uid, active.challenger_hotkey, status.netuid) + '</div></div>' +
+      '<div class="combatant combatant--challenger"><div class="eyebrow">Challenger</div><div class="repo">' + participantRepoLink(challengerRepo, active.challenger_pr_url || active.challenger_repo_url, false, true, active.challenger_uid, active.challenger_hotkey, active.challenger_agent_username) + '</div><div class="detail">UID ' + uidCell(active.challenger_uid, active.challenger_hotkey, status.netuid) + '</div></div>' +
     '</div>' +
     buildSegments(rounds, totalRounds) +
     '<div class="duel-context">' +
@@ -1702,6 +1948,92 @@ function renderActiveDuel(status) {
     '</div>';
 }
 
+function dollars(value) {
+  return Number.isFinite(Number(value)) ? '$' + Number(value).toFixed(2) : '--';
+}
+
+function secondsDuration(seconds) {
+  const value = Number(seconds);
+  if (!Number.isFinite(value) || value < 0) return '--';
+  return compactDuration(value * 1000);
+}
+
+function scoreText(score) {
+  if (!score || !Number.isFinite(Number(score.total_count))) return '--';
+  return num(score.resolved_count) + '/' + num(score.total_count);
+}
+
+function baselineName(bench) {
+  const baseline = bench && bench.baseline;
+  return (baseline && (baseline.name || baseline.repo_url || 'mini-swe-agent')) || 'mini-swe-agent';
+}
+
+function currentKingCommit(data) {
+  const king = data && data.current_king;
+  return king && (king.commit_sha || king.runtime_commit_sha || king.display_commit_sha);
+}
+
+function benchmarkForCurrentKing(payload, data) {
+  const active = payload && payload.active;
+  const latest = payload && payload.latest;
+  const currentCommit = currentKingCommit(data);
+  if (currentCommit && active && active.king_commit_sha === currentCommit) return active;
+  if (currentCommit && latest && latest.king_commit_sha === currentCommit) return latest;
+  return latest || active || null;
+}
+
+function renderSwebench(payload, data) {
+  const bench = benchmarkForCurrentKing(payload, data);
+  if (!bench) {
+    $('swebench-meta').textContent = 'NO RUN';
+    $('swebench-panel').innerHTML = '<div class="empty">[NO SWE-BENCH RUN FOUND]</div>';
+    return;
+  }
+  const scores = bench.scores || {};
+  const kingScore = scores.king || {};
+  const baselineScore = scores.baseline || scores.pi || {};
+  const usage = bench.usage || {};
+  const kingUsage = usage.king || {};
+  const baselineUsage = usage.baseline || usage.pi || {};
+  const delta = Number(scores.delta_pass_rate);
+  const deltaText = Number.isFinite(delta) ? (delta >= 0 ? '+' : '') + (delta * 100).toFixed(1) + ' pts' : '--';
+  const status = String(bench.status || 'unknown').toUpperCase();
+  const progress = bench.progress || {};
+  const total = Number(progress.total || kingScore.total_count || baselineScore.total_count || 50);
+  const progressText = bench.status === 'completed'
+    ? 'Completed in ' + secondsDuration(bench.elapsed && bench.elapsed.wall_seconds)
+    : 'Progress king ' + num(progress.king_predictions) + '/' + num(total) + ' / baseline ' + num(progress.baseline_predictions) + '/' + num(total);
+  const currentCommit = currentKingCommit(data);
+  const stale = currentCommit && bench.king_commit_sha && currentCommit !== bench.king_commit_sha;
+  const kingLabel = stale ? 'Last scored king' : 'Current king';
+  $('swebench-meta').textContent = stale ? 'WAITING FOR NEW KING RUN' : status;
+  $('swebench-panel').innerHTML =
+    '<div class="bench-grid">' +
+      '<div class="bench-agent"><div class="bench-name">' + escapeHtml(kingLabel) + '</div><div class="bench-score">' + escapeHtml(scoreText(kingScore)) + '</div><div class="bench-detail">' + pct(kingScore.pass_rate) + ' resolved / ' + dollars(kingUsage.cost) + '</div></div>' +
+      '<div class="bench-delta ' + (delta < 0 ? 'status-bad' : delta > 0 ? 'status-ok' : '') + '">Delta<br>' + escapeHtml(deltaText) + '</div>' +
+      '<div class="bench-agent bench-agent--right"><div class="bench-name">' + escapeHtml(baselineName(bench)) + '</div><div class="bench-score">' + escapeHtml(scoreText(baselineScore)) + '</div><div class="bench-detail">' + pct(baselineScore.pass_rate) + ' resolved / ' + dollars(baselineUsage.cost) + '</div></div>' +
+    '</div>' +
+    '<div class="bench-progress">' + escapeHtml(progressText) + ' / ' + escapeHtml(bench.model || '--') + ' / ' + escapeHtml(shortHash(bench.king_commit_sha || '')) + '</div>';
+}
+
+async function loadSwebench(data) {
+  const section = $('swebench-section');
+  if (section) section.style.display = '';
+  try {
+    const url = SWEBENCH_URL + '?t=' + encodeURIComponent(Date.now());
+    const response = await fetchWithTimeout(url, { cache: 'no-store' }, 5_000);
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    renderSwebench(await response.json(), data);
+  } catch (error) {
+    renderSwebench(SWEBENCH_PUBLIC_SNAPSHOT, data);
+    $('swebench-meta').textContent = 'PUBLIC SNAPSHOT';
+  }
+}
+
+function queueAcceptedValue(item) {
+  return item.accepted_at ? ago(item.accepted_at) : '--';
+}
+
 function renderQueue(queue, netuid) {
   const list = arr(queue);
   const queueLabel = num(list.length) + ' queued';
@@ -1711,9 +2043,9 @@ function renderQueue(queue, netuid) {
   }
   const rows = list.slice(0, 40).map((item, index) => {
     const pr = item.pr_url || (item.commit_sha ? MAIN_REPO_URL + '/pulls?q=' + encodeURIComponent(item.commit_sha) : MAIN_REPO_URL + '/pulls');
-    return '<tr><td class="num">' + String(index + 1).padStart(2, '0') + '</td><td class="num uid-col">' + uidCell(item.uid, item.hotkey, netuid) + '</td><td>' + participantRepoLink(item.repo, item.pr_url || item.repo_url || pr, true, false, item.uid, item.hotkey) + '</td><td class="num">' + (item.commitment_block ? '#' + num(item.commitment_block) : '--') + '</td></tr>';
+    return '<tr><td class="num">' + String(index + 1).padStart(2, '0') + '</td><td class="num uid-col">' + uidCell(item.uid, item.hotkey, netuid) + '</td><td>' + participantRepoLink(item.repo, item.pr_url || item.repo_url || pr, true, false, item.uid, item.hotkey, item.agent_username) + '</td><td class="num">' + queueAcceptedValue(item) + '</td></tr>';
   }).join('');
-  $('queue-panel').innerHTML = '<div class="panel-title"><strong>Queue</strong> / ' + queueLabel + '</div><div class="table-wrap"><table class="data-table queue-table"><colgroup><col style="width:12%"><col style="width:16%"><col style="width:52%"><col style="width:20%"></colgroup><thead><tr><th class="num">#</th><th class="num uid-col">UID</th><th>Repo / PR</th><th class="num">Block</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  $('queue-panel').innerHTML = '<div class="panel-title"><strong>Queue</strong> / ' + queueLabel + '</div><div class="table-wrap"><table class="data-table queue-table"><colgroup><col style="width:12%"><col style="width:16%"><col style="width:52%"><col style="width:20%"></colgroup><thead><tr><th class="num">#</th><th class="num uid-col">UID</th><th>Repo / PR</th><th class="num">Accepted</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
 
 function duelWinner(duel) {
@@ -1755,7 +2087,8 @@ function historyOutcome(duel, retestSourceId) {
   const sourceId = retestSourceId != null ? String(retestSourceId).padStart(6, '0') : '';
 
   if (duel.disqualification_reason) {
-    return { label: 'DQ', tag: 'warn', detail: 'Disqualified', search: 'dq disqualified' };
+    const reason = String(duel.disqualification_reason).trim();
+    return { label: 'DQ', tag: 'warn', detail: reason, search: 'dq disqualified ' + reason };
   }
   if (sourceId) {
     if (winner === 'challenger' || duel.king_replaced) return { label: 'Retest passed', tag: 'good', detail: 'For ' + sourceId, search: 'confirmation retest passed set 02' };
@@ -1794,6 +2127,12 @@ function compactConfirmationFailureReason(reason) {
     .replace(/\s+/g, ' ')
     .trim();
   return text ? text.charAt(0).toLowerCase() + text.slice(1) : '';
+}
+
+function disqualificationDetail(duel) {
+  const reason = String(duel && duel.disqualification_reason || '').trim();
+  if (!reason) return '';
+  return '<div class="confirmation-detail dq-detail">' + escapeHtml(reason) + '</div>';
 }
 
 function confirmationDetail(duel) {
@@ -1850,7 +2189,8 @@ function renderHistory(duels) {
   const visible = query
     ? recent.filter((duel) => historySearchText(duel, retestSources.get(String(Number(duel.duel_id)))).includes(query))
     : recent;
-  $('history-meta').textContent = (query ? visible.length + ' / ' + recent.length + ' SHOWN | ' : '') + arr(duels).length + ' TOTAL DUELS';
+  const total = duelTotal(lastData || { duels });
+  $('history-meta').textContent = (query ? visible.length + ' / ' + recent.length + ' SHOWN | ' : '') + total + ' TOTAL DUELS';
   if (!recent.length) {
     $('history-panel').innerHTML = '<div class="card"><div class="empty">[NO DUELS PUBLISHED]</div></div>';
     return;
@@ -1866,8 +2206,8 @@ function renderHistory(duels) {
     rows += '<tr>' +
       '<td class="num"><a class="duel-link" href="./duels.html?duel=' + encodeURIComponent(id) + '">' + escapeHtml(id) + '</a></td>' +
       '<td class="num uid-col">' + uidCell(duel.challenger_uid, duel.challenger_hotkey || duel.hotkey, lastData && lastData.status && lastData.status.netuid) + '</td>' +
-      '<td>' + participantRepoLink(duel.challenger_repo, duel.challenger_pr_url || duel.challenger_repo_url, true, false, duel.challenger_uid, duel.challenger_hotkey || duel.hotkey) + '</td>' +
-      '<td>' + outcomeTag(duel, retestSources.get(String(Number(duel.duel_id)))) + confirmationDetail(duel) + retestSourceDetail(retestSources.get(String(Number(duel.duel_id)))) + '</td>' +
+      '<td>' + participantRepoLink(duel.challenger_repo, duel.challenger_pr_url || duel.challenger_repo_url, true, false, duel.challenger_uid, duel.challenger_hotkey || duel.hotkey, duel.challenger_agent_username) + '</td>' +
+      '<td>' + outcomeTag(duel, retestSources.get(String(Number(duel.duel_id)))) + disqualificationDetail(duel) + confirmationDetail(duel) + retestSourceDetail(retestSources.get(String(Number(duel.duel_id)))) + '</td>' +
       '<td class="num" title="' + escapeHtml(duelResultLabel(duel)) + '">' + duelResultHtml(duel) + '</td>' +
       '<td class="num">' + num(roundCount(duel)) + '</td>' +
       '<td class="mono">' + escapeHtml(ago(duel.finished_at)) + '</td>' +
@@ -2197,22 +2537,30 @@ function restoreUiState(snapshot) {
 
 function renderAll(data) {
   const uiState = snapshotUiState();
-  lastData = data;
-  const status = data.status || {};
-  const duels = arr(data.duels);
+  const previousDuels = arr(lastData && lastData.duels);
+  const currentDuels = arr(data.duels);
+  const hasFullHistory = lastData && lastData.updated_at === data.updated_at && previousDuels.length > currentDuels.length;
+  lastData = hasFullHistory ? { ...data, duels: previousDuels, duels_total: previousDuels.length } : data;
+  const status = lastData.status || {};
+  const duels = arr(lastData.duels);
   $('system-status').textContent = 'LIVE';
   $('system-status').className = 'status-ok';
-  $('updated-at').textContent = ago(data.updated_at);
-  const recentDethrones = recentDethronesSummary(data);
+  $('updated-at').textContent = ago(lastData.updated_at);
+  const recentDethrones = recentDethronesSummary(lastData);
   $('validator-stat').textContent = ago(status.validator_started_at);
   $('history-dethrone-stat').textContent = recentDethrones.replaced + '/' + recentDethrones.total;
-  $('footer-status').textContent = duels.length + ' DUELS | ' + num(status.total_rounds || duels.reduce((sum, duel) => sum + roundCount(duel), 0)) + ' ROUNDS | ' + num(status.miners_seen) + ' MINERS SEEN';
-  renderKing(data);
+  $('footer-status').textContent = footerStatusText(lastData);
+  renderPoolRebuild(lastData);
+  renderKing(lastData);
   renderActiveDuel(status);
-  renderQueue(status.queue, status.netuid);
-  renderHistory(duels);
-  renderInactive(status);
+  loadSwebench(lastData);
   restoreUiState(uiState);
+  scheduleIdle(() => {
+    renderQueue(status.queue, status.netuid);
+    renderHistory(duels);
+    renderInactive(status);
+    restoreUiState(uiState);
+  });
 }
 
 async function enrichPrivateSubmissionHotkeys(data) {
@@ -2222,7 +2570,7 @@ async function enrichPrivateSubmissionHotkeys(data) {
   const missing = targets.some((item) => isPrivateSubmissionRepo(item.challenger_repo || item.repo, item.challenger_repo_url || item.repo_url) && !(item.challenger_hotkey || item.hotkey));
   if (!missing) return data;
   try {
-    const response = await fetch(SUBMISSIONS_URL, { cache: 'no-store' });
+    const response = await fetchWithTimeout(SUBMISSIONS_URL, { cache: 'no-store' }, 1200);
     if (!response.ok) return data;
     const payload = await response.json();
     const byId = new Map(arr(payload.submissions).map((item) => [String(item.submission_id || ''), item]));
@@ -2244,12 +2592,14 @@ async function enrichPrivateSubmissionHotkeys(data) {
 async function fetchAndRender() {
   try {
     let data = null;
+    let sourceUrl = '';
     let lastError = null;
-    for (const url of DATA_URLS) {
+    for (const source of DATA_URLS) {
       try {
-        const response = await fetch(url, { cache: 'no-store' });
-        if (!response.ok) throw new Error(url + ' HTTP ' + response.status);
+        const response = await fetchWithTimeout(source.url, { cache: 'no-store' }, source.timeoutMs);
+        if (!response.ok) throw new Error(source.url + ' HTTP ' + response.status);
         data = await response.json();
+        sourceUrl = source.url;
         break;
       } catch (error) {
         lastError = error;
@@ -2257,15 +2607,34 @@ async function fetchAndRender() {
     }
     if (!data) throw lastError || new Error('dashboard unavailable');
     if (!data || typeof data !== 'object') throw new Error('Invalid JSON');
-    data = await enrichPrivateSubmissionHotkeys(data);
     const duelsLink = $('duels-link');
     if (duelsLink) duelsLink.href = safeHref(dashboardLink(data, 'duels_html', './duels.html'), './duels.html');
     renderAll(data);
+    if (sourceUrl !== FULL_DATA_URL && isPartialDashboard(data)) {
+      scheduleIdle(() => loadFullDashboard(data.updated_at));
+    }
+    enrichPrivateSubmissionHotkeys(data).then((enriched) => {
+      if (enriched && lastData && enriched.updated_at === lastData.updated_at) renderAll(enriched);
+    });
   } catch (error) {
     renderShellError(error.message || 'dashboard unavailable');
   } finally {
     clearTimeout(retryTimer);
     retryTimer = setTimeout(fetchAndRender, POLL_MS);
+  }
+}
+
+async function loadFullDashboard(expectedUpdatedAt) {
+  if (lastData && !isPartialDashboard(lastData) && lastData.updated_at === expectedUpdatedAt) return;
+  try {
+    const response = await fetchWithTimeout(FULL_DATA_URL, { cache: 'no-store' }, 15_000);
+    if (!response.ok) return;
+    const data = await response.json();
+    if (!data || typeof data !== 'object') return;
+    if (expectedUpdatedAt && data.updated_at !== expectedUpdatedAt) return;
+    renderAll(data);
+  } catch (_) {
+    // The compact home payload is enough to keep the dashboard live.
   }
 }
 

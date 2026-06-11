@@ -469,6 +469,11 @@ input:focus { border-color: var(--text-display); }
   text-transform: uppercase;
 }
 .outcome-detail a { color: var(--text-secondary); text-decoration: underline; text-underline-offset: 2px; }
+.outcome-detail.dq-detail {
+  white-space: normal;
+  text-transform: none;
+  letter-spacing: 0;
+}
 .status-ok { color: var(--success) !important; }
 .status-warn { color: var(--warning) !important; }
 .status-bad { color: var(--accent) !important; }
@@ -1139,7 +1144,8 @@ function duelOutcome(duel) {
   const failure = isRetest && sourceState ? sourceState.failure : ownState.failure;
 
   if (duel && duel.disqualification_reason) {
-    return { label: 'DQ', cls: 'warn', note: 'Disqualified', tooltip: duel.disqualification_reason };
+    const reason = String(duel.disqualification_reason).trim();
+    return { label: 'DQ', cls: 'warn', note: reason, tooltip: reason };
   }
 
   if (!isRetest && challengerIsCurrentKing(duel)) {
@@ -1298,6 +1304,8 @@ function roundNoteText(duelId, round, index) {
   const task = round.task_name || ('round ' + (index + 1));
   const note = round.llm_judge_error || round.error || round.llm_judge_rationale || '[NO JUDGE RATIONALE]';
   const judgeNotes = judgeDecisionMarkdown(round);
+  const llmWinner = judgeWinner(round);
+  const scoreLine = roundScoreLine(round);
   const links = [
     ['king.diff', 'solutions/king.diff'],
     ['challenger.diff', 'solutions/challenger.diff'],
@@ -1310,7 +1318,9 @@ function roundNoteText(duelId, round, index) {
   return [
     'Duel: ' + idText(duelId),
     'Task: ' + task,
-    'Winner: ' + roundWinnerLabel(round),
+    'Round winner: ' + roundWinnerLabel(round),
+    'LLM judge winner: ' + roleLabel(llmWinner),
+    scoreLine ? 'Scores: ' + scoreLine : '',
     'Consensus: ' + (round.llm_judge_consensus_status || '--'),
     '',
     note,
@@ -1324,12 +1334,40 @@ function roundNoteText(duelId, round, index) {
 function roundWinner(round) {
   const rawWinner = String((round && round.winner) || '').toLowerCase();
   if (rawWinner === 'error' || (round && round.error)) return 'error';
-  return String((round && (round.llm_judge_winner || round.winner)) || 'tie').toLowerCase();
+  return rawWinner || 'tie';
+}
+
+function judgeWinner(round) {
+  return String((round && round.llm_judge_winner) || 'tie').toLowerCase();
+}
+
+function roleLabel(value) {
+  const normalized = String(value || 'tie').toLowerCase();
+  return normalized === 'error' ? 'TASK ERROR' : normalized.toUpperCase();
 }
 
 function roundWinnerLabel(round) {
-  const winner = roundWinner(round);
-  return winner === 'error' ? 'TASK ERROR' : winner.toUpperCase();
+  return roleLabel(roundWinner(round));
+}
+
+function formatScore(value) {
+  const numValue = Number(value);
+  if (!Number.isFinite(numValue)) return '--';
+  return numValue.toFixed(3);
+}
+
+function roundScoreLine(round) {
+  if (!round) return '';
+  const hasRoundScores = Number.isFinite(Number(round.king_score)) || Number.isFinite(Number(round.challenger_score));
+  const hasJudgeScores = Number.isFinite(Number(round.king_llm_score)) || Number.isFinite(Number(round.challenger_llm_score));
+  const parts = [];
+  if (hasRoundScores) {
+    parts.push('round king=' + formatScore(round.king_score) + ' challenger=' + formatScore(round.challenger_score));
+  }
+  if (hasJudgeScores) {
+    parts.push('llm king=' + formatScore(round.king_llm_score) + ' challenger=' + formatScore(round.challenger_llm_score));
+  }
+  return parts.join('; ');
 }
 
 function judgeDecisions(round) {
@@ -1347,6 +1385,7 @@ function judgeDecisionMarkdown(round) {
   if (!decisions.length) return '';
   return [
     'Judge decisions:',
+    'Note: Candidate A/B names inside rationales are anonymized judge labels and may change each task; winners shown here are normalized to king/challenger.',
     ...decisions.map((item) => {
       const decision = item.decision || {};
       return '- ' + (item.model || 'judge') +
@@ -1360,7 +1399,8 @@ function judgeDecisionMarkdown(round) {
 function judgeDecisionBlocks(round) {
   const decisions = judgeDecisions(round);
   if (!decisions.length) return '';
-  return '<div class="metric-label">Judge Reasoning</div>' + decisions.map((item) => {
+  const note = '<div class="metric-note">Candidate A/B names inside rationales are anonymized judge labels and may change each task. Winners shown here are normalized to king/challenger.</div>';
+  return '<div class="metric-label">Judge Reasoning</div>' + note + decisions.map((item) => {
     const decision = item.decision || {};
     const heading = (item.model || 'judge') + ' / r' + (item.round || '?') + ' / ' + String(decision.winner || 'tie').toUpperCase();
     return '<div class="note-text"><strong>' + escapeHtml(heading) + '</strong><br>' + escapeHtml(decision.rationale || '[NO RATIONALE]') + '</div>';
@@ -1418,7 +1458,8 @@ function searchableText(duel) {
     duel.confirmation_duel_id,
     duel.confirmation_of_duel_id,
     duel.confirmation_retest_passed,
-    duel.confirmation_failure_reason
+    duel.confirmation_failure_reason,
+    duel.disqualification_reason
   ].filter((value) => value != null && String(value).trim() !== '').join(' ').toLowerCase();
 }
 
@@ -1587,16 +1628,19 @@ function renderRoundDetail(duel, round, index) {
   const task = round.task_name || ('round-' + (index + 1));
   const note = round.llm_judge_error || round.error || round.llm_judge_rationale || '[NO RATIONALE]';
   const winner = roundWinner(round);
+  const llmWinner = judgeWinner(round);
+  const scoreLine = roundScoreLine(round);
   const metrics =
     '<div class="round-metric-grid">' +
       '<div class="round-metric"><div class="metric-label">Winner</div><div class="metric-note">' + winnerTag(winner) + '</div></div>' +
+      '<div class="round-metric"><div class="metric-label">LLM Judge</div><div class="metric-note">' + winnerTag(llmWinner) + '</div></div>' +
       '<div class="round-metric"><div class="metric-label">Consensus</div><div class="metric-note">' + escapeHtml(round.llm_judge_consensus_status || '--') + '</div></div>' +
       '<div class="round-metric"><div class="metric-label">Consensus round</div><div class="metric-note">' + escapeHtml(round.llm_judge_consensus_round || '--') + '</div></div>' +
       '<div class="round-metric"><div class="metric-label">King Exit</div><div class="metric-note">' + escapeHtml(round.king_exit_reason || '--') + '</div></div>' +
       '<div class="round-metric"><div class="metric-label">Challenger Exit</div><div class="metric-note">' + escapeHtml(round.challenger_exit_reason || '--') + '</div></div>' +
     '</div>';
   return '<div class="round-card">' +
-    '<div>' + metrics + '<div class="metric-label">Task Summary</div><div class="note-text">' + escapeHtml(round.task_summary || round.task_title || '[NO TASK SUMMARY]') + '</div><div class="metric-label">Consensus Rationale</div><div class="note-text">' + escapeHtml(note) + '</div>' + judgeDecisionBlocks(round) + '<div class="copy-row">' + copyButton(roundNoteText(duelId, round, index), 'Copy Note') + '</div></div>' +
+    '<div>' + metrics + (scoreLine ? '<div class="metric-label">Scores</div><div class="note-text">' + escapeHtml(scoreLine) + '</div>' : '') + '<div class="metric-label">Task Summary</div><div class="note-text">' + escapeHtml(round.task_summary || round.task_title || '[NO TASK SUMMARY]') + '</div><div class="metric-label">Consensus Rationale</div><div class="note-text">' + escapeHtml(note) + '</div>' + judgeDecisionBlocks(round) + '<div class="copy-row">' + copyButton(roundNoteText(duelId, round, index), 'Copy Note') + '</div></div>' +
     '<div><div class="metric-label">Task ID</div>' + taskCodeButton(task) + '<div class="metric-label artifact-heading">Public Artifacts</div><div class="artifact-grid">' + artifactLinks(duelId, task) + '</div></div>' +
   '</div>';
 }

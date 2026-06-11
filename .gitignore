@@ -4,5 +4,12 @@ __pycache__/
 
 # Local dashboard/state artifacts
 dashboard_data.json
+dashboard-home.json
+dashboard-summary.json
+swebench-local.json
 state.json
 duels
+
+# Local backups/snapshots
+*.before-remove-*.json
+*.bak.promote-*

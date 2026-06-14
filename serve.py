@@ -28,11 +28,7 @@ LOCAL_DASHBOARD_PATH = os.environ.get(
     "DASHBOARD_DATA_PATH",
     DEFAULT_LOCAL_DASHBOARD_PATH,
 )
-DEFAULT_SWEBENCH_BENCHMARK_ROOT = "/home/const/subnet66/tau/workspace/validate/netuid-66/benchmarks/swebench-verified"
-SWEBENCH_BENCHMARK_ROOT = os.environ.get(
-    "SWEBENCH_BENCHMARK_ROOT",
-    DEFAULT_SWEBENCH_BENCHMARK_ROOT,
-)
+SWEBENCH_BENCHMARK_ROOT = os.environ.get("SWEBENCH_BENCHMARK_ROOT", "").strip()
 PUBLIC_BASE_URL = os.environ.get("R2_PUBLIC_URL", "https://s3.hippius.com/constantinople")
 SUBMISSIONS_API_UPSTREAM = os.environ.get(
     "SUBMISSIONS_API_UPSTREAM",
@@ -276,6 +272,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return json.loads(f.read())
 
     def _latest_swebench_path(self):
+        if not SWEBENCH_BENCHMARK_ROOT:
+            return ""
         return os.path.join(SWEBENCH_BENCHMARK_ROOT, "latest.json")
 
     def _mini_swe_usage_from_trajectories(self, outputs_dir):
@@ -410,7 +408,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return payload
 
     def _latest_swebench_job(self):
-        if not os.path.isdir(SWEBENCH_BENCHMARK_ROOT):
+        if not SWEBENCH_BENCHMARK_ROOT or not os.path.isdir(SWEBENCH_BENCHMARK_ROOT):
             return None
         jobs = []
         for name in os.listdir(SWEBENCH_BENCHMARK_ROOT):

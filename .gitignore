@@ -9,7 +9,9 @@ dashboard-summary.json
 swebench-local.json
 state.json
 duels
+sss.html
 
 # Local backups/snapshots
 *.before-remove-*.json
 *.bak.promote-*
+*.bak.*

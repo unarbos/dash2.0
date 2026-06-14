@@ -2,16 +2,19 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-TAU_SRC = Path("/home/const/subnet66/tau/src")
-DEFAULT_SOURCE = Path("/home/const/subnet66/tau/workspace/validate/netuid-66/dashboard_data.json")
 DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent
-DEFAULT_SWEBENCH_ROOT = Path("/home/const/subnet66/tau/workspace/validate/netuid-66/benchmarks/swebench-verified")
 DEFAULT_POOL_TARGET = 50
+
+
+def _env_path(name: str) -> Path | None:
+    raw = os.environ.get(name, "").strip()
+    return Path(raw) if raw else None
 
 
 def utc_now_iso() -> str:
@@ -192,19 +195,28 @@ def dashboard_swebench_latest(payload: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
-def artifact_swebench_latest(benchmark_root: Path) -> dict[str, Any] | None:
+def artifact_swebench_latest(benchmark_root: Path | None) -> dict[str, Any] | None:
+    if benchmark_root is None or not benchmark_root.is_dir():
+        return None
     latest_path = benchmark_root / "latest.json"
     if not latest_path.exists():
         return None
     return compact_swebench_comparison(benchmark_root, read_payload(latest_path))
 
 
-def swebench_payload(payload: dict[str, Any], benchmark_root: Path) -> dict[str, Any]:
-    latest = dashboard_swebench_latest(payload) or artifact_swebench_latest(benchmark_root)
+def swebench_payload(payload: dict[str, Any], benchmark_root: Path | None) -> dict[str, Any]:
+    latest = dashboard_swebench_latest(payload)
+    if latest is None and benchmark_root is not None:
+        latest = artifact_swebench_latest(benchmark_root)
     return {"latest": latest, "active": latest}
 
 
-def refresh_static_dashboard(source: Path, output_dir: Path, tau_src: Path, benchmark_root: Path) -> None:
+def refresh_static_dashboard(
+    source: Path,
+    output_dir: Path,
+    tau_src: Path,
+    benchmark_root: Path | None,
+) -> None:
     build_home, build_summary = load_builders(tau_src)
     payload = read_payload(source)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -214,10 +226,21 @@ def refresh_static_dashboard(source: Path, output_dir: Path, tau_src: Path, benc
 
 
 def main() -> int:
-    source = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_SOURCE
+    default_source = _env_path("DASHBOARD_DATA_PATH") or (DEFAULT_OUTPUT_DIR / "dashboard_data.json")
+    source = Path(sys.argv[1]) if len(sys.argv) > 1 else default_source
     output_dir = Path(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_OUTPUT_DIR
-    benchmark_root = Path(sys.argv[3]) if len(sys.argv) > 3 else DEFAULT_SWEBENCH_ROOT
-    refresh_static_dashboard(source=source, output_dir=output_dir, tau_src=TAU_SRC, benchmark_root=benchmark_root)
+    benchmark_root = Path(sys.argv[3]) if len(sys.argv) > 3 else _env_path("SWEBENCH_BENCHMARK_ROOT")
+    tau_src = Path(sys.argv[4]) if len(sys.argv) > 4 else _env_path("TAU_SRC")
+    if tau_src is None or not tau_src.is_dir():
+        raise SystemExit(
+            "TAU_SRC must point at the tau/src checkout (set env TAU_SRC or pass argv[4])"
+        )
+    refresh_static_dashboard(
+        source=source,
+        output_dir=output_dir,
+        tau_src=tau_src,
+        benchmark_root=benchmark_root,
+    )
     return 0
 
 

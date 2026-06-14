@@ -83,7 +83,20 @@ Arguments override env: `source.json [output_dir] [benchmark_root] [tau_src]`.
 
 ## Production deployment
 
-Production serves this directory as static files (nginx root → `dash2.0/`), with R2 proxy rules for dashboard and duel JSON. Private submission POSTs go to the validator submissions API on `:8066`, proxied at `/api/submissions`.
+Production runs `serve.py` on port **8088** (PM2: `dash-server`). It serves the HTML/CSS and **builds dashboard JSON live** from the validator snapshot on disk (falling back to public R2 when needed). Nginx proxies all site traffic to that process.
+
+```bash
+cd dash2.0
+pm2 start ./start_dash_server.sh --name dash-server
+sudo cp ../tau/nginx-ninja66.conf /etc/nginx/sites-enabled/ninja66.conf
+sudo nginx -t && sudo nginx -s reload
+```
+
+Environment overrides for `start_dash_server.sh`:
+
+- `DASHBOARD_DATA_PATH` — validator `dashboard_data.json` (default: tau workspace netuid-66)
+- `SWEBENCH_BENCHMARK_ROOT` — local SWE-bench artifacts for `/swebench-local.json`
+- `PORT` — listen port (default `8088`)
 
 See `tau/nginx-ninja66.conf` for the reference nginx config.
 

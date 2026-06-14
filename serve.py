@@ -10,6 +10,7 @@ import threading
 import re
 import time
 import gzip
+from datetime import UTC, datetime
 try:
     import brotli
 except Exception:
@@ -34,6 +35,68 @@ SUBMISSIONS_API_UPSTREAM = os.environ.get(
     "SUBMISSIONS_API_UPSTREAM",
     "http://127.0.0.1:8066/api/submissions",
 )
+POOL_TARGET_PER_POOL = max(1, int(os.environ.get("POOL_TARGET_PER_POOL", "50")))
+
+
+def _pool_task_file_count(pool_dir: str) -> int:
+    if not os.path.isdir(pool_dir):
+        return 0
+    return sum(
+        1
+        for name in os.listdir(pool_dir)
+        if name.endswith(".json") and os.path.isfile(os.path.join(pool_dir, name))
+    )
+
+
+def _pool_rebuild_entry(label: str, pool_dir: str, target: int) -> dict:
+    count = _pool_task_file_count(pool_dir)
+    needed = max(target - count, 0)
+    progress = min(count / target, 1.0) if target > 0 else 1.0
+    return {
+        "label": label,
+        "count": count,
+        "target": target,
+        "needed": needed,
+        "ready": needed == 0,
+        "progress": progress,
+        "path": pool_dir,
+    }
+
+
+def _pool_target_per_pool(payload: dict) -> int:
+    status = payload.get("status") if isinstance(payload.get("status"), dict) else {}
+    scoring = status.get("scoring") if isinstance(status.get("scoring"), dict) else {}
+    try:
+        return max(1, int(scoring.get("duel_rounds") or POOL_TARGET_PER_POOL))
+    except (TypeError, ValueError):
+        return POOL_TARGET_PER_POOL
+
+
+def _pool_rebuild_status(validate_root: str, *, target_per_pool: int) -> dict:
+    pools = [
+        _pool_rebuild_entry("primary", os.path.join(validate_root, "task-pool"), target_per_pool),
+        _pool_rebuild_entry("retest", os.path.join(validate_root, "task-pool-retest"), target_per_pool),
+    ]
+    total_count = sum(int(pool["count"]) for pool in pools)
+    total_target = sum(int(pool["target"]) for pool in pools)
+    total_needed = sum(int(pool["needed"]) for pool in pools)
+    return {
+        "updated_at": datetime.now(UTC).isoformat(),
+        "mode": "live",
+        "target_per_pool": target_per_pool,
+        "count": total_count,
+        "target": total_target,
+        "needed": total_needed,
+        "ready": total_needed == 0,
+        "progress": min(total_count / total_target, 1.0) if total_target > 0 else 1.0,
+        "pools": pools,
+    }
+
+
+def _attach_pool_rebuild(payload: dict) -> dict:
+    validate_root = os.path.dirname(LOCAL_DASHBOARD_PATH)
+    target = _pool_target_per_pool(payload)
+    return {**payload, "pool_rebuild": _pool_rebuild_status(validate_root, target_per_pool=target)}
 
 
 _dashboard_cache = {"data": None, "ts": 0}
@@ -612,7 +675,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if not isinstance(payload, dict):
             return payload
         links = payload.get("links") if isinstance(payload.get("links"), dict) else {}
-        return {
+        return _attach_pool_rebuild({
             "updated_at": payload.get("updated_at"),
             "current_king": self._submission_summary(payload.get("current_king")),
             "duels": [
@@ -622,7 +685,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             ],
             "status": self._status_summary(payload.get("status") or {}),
             "links": {**links, "duels_html": "./duels.html"},
-        }
+        })
 
     def _summarize_home_payload(self, payload):
         if not isinstance(payload, dict):
@@ -630,7 +693,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         duels = payload.get("duels", [])
         recent_duels = duels[-40:] if isinstance(duels, list) else []
         links = payload.get("links") if isinstance(payload.get("links"), dict) else {}
-        return {
+        return _attach_pool_rebuild({
             "updated_at": payload.get("updated_at"),
             "current_king": self._submission_summary(payload.get("current_king")),
             "duels": [
@@ -641,7 +704,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             "duels_total": len(duels) if isinstance(duels, list) else 0,
             "status": self._status_summary(payload.get("status") or {}),
             "links": {**links, "duels_html": "./duels.html", "dashboard_summary": "./dashboard-summary.json"},
-        }
+        })
 
     def _dashboard_payload_from_local_or_remote(self):
         local_mtime = None

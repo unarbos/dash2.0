@@ -2567,7 +2567,12 @@ async function enrichPrivateSubmissionHotkeys(data) {
   const status = data && data.status;
   if (!status || typeof status !== 'object') return data;
   const targets = [status.active_duel, ...arr(status.queue)].filter(Boolean);
-  const missing = targets.some((item) => isPrivateSubmissionRepo(item.challenger_repo || item.repo, item.challenger_repo_url || item.repo_url) && !(item.challenger_hotkey || item.hotkey));
+  const missing = targets.some((item) => {
+    const repo = item.challenger_repo || item.repo;
+    const repoUrl = item.challenger_repo_url || item.repo_url;
+    if (!isPrivateSubmissionRepo(repo, repoUrl)) return false;
+    return !(item.challenger_hotkey || item.hotkey) || item.uid == null || item.challenger_uid == null;
+  });
   if (!missing) return data;
   try {
     const response = await fetchWithTimeout(SUBMISSIONS_URL, { cache: 'no-store' }, 1200);

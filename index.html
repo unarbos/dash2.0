@@ -1475,7 +1475,20 @@ function num(value) {
   return Number.isFinite(Number(value)) ? Number(value).toLocaleString() : '--';
 }
 
+function isTaskErrorRound(round) {
+  if (!round) return false;
+  if (round.task_error) return true;
+  return String(round.error || '').startsWith('task_error:');
+}
+
 function duelErrorCount(duel) {
+  const rounds = arr(duel && duel.rounds);
+  if (rounds.length) {
+    return rounds.filter((round) => {
+      const winner = String(round && round.winner || '').toLowerCase();
+      return winner === 'error' && !isTaskErrorRound(round);
+    }).length;
+  }
   return Number((duel && duel.errors) || 0);
 }
 
@@ -1528,9 +1541,9 @@ function activeResultHtml(active, losses, ties, wins) {
 function activeScoredRoundCount(active, wins, losses, ties) {
   const rounds = arr(active && active.rounds);
   if (rounds.length) {
-    return rounds.filter(round => ['king', 'challenger', 'tie', 'error'].includes(String(round && round.winner || ''))).length;
+    return rounds.filter(round => ['king', 'challenger', 'tie', 'error'].includes(displayRoundWinner(round))).length;
   }
-  const errors = Number((active && active.errors) || 0);
+  const errors = duelErrorCount(active);
   return wins + losses + ties + (Number.isFinite(errors) ? errors : 0);
 }
 
@@ -1636,12 +1649,21 @@ function buildSegments(rounds, total) {
   let html = '';
   for (let i = 0; i < limit; i += 1) {
     const round = rounds[i];
-    const winner = round ? String(round.winner || 'tie') : 'pending';
+    const winner = round ? displayRoundWinner(round) : 'pending';
     const cls = winner === 'king' ? 'king' : winner === 'challenger' ? 'challenger' : winner === 'error' ? 'error' : winner === 'pending' ? 'pending' : 'tie';
-    const label = round ? escapeHtml((round.task_name || 'round') + ' - ' + winner) : 'pending';
+    const suffix = round && isTaskErrorRound(round) ? ' - task error (tie)' : '';
+    const label = round ? escapeHtml((round.task_name || 'round') + ' - ' + winner + suffix) : 'pending';
     html += '<span class="segment ' + cls + '" data-tooltip="' + label + '" aria-label="' + label + '"></span>';
   }
   return '<div class="segment-bar" style="--segments:' + limit + '">' + html + '</div>';
+}
+
+function displayRoundWinner(round) {
+  if (!round) return 'pending';
+  if (isTaskErrorRound(round)) return 'tie';
+  const winner = String(round.winner || 'tie').toLowerCase();
+  if (winner === 'error' && round.error) return 'error';
+  return winner || 'tie';
 }
 
 function renderStat(label, value, cls) {
@@ -2285,7 +2307,7 @@ document.addEventListener('click', async (event) => {
 });
 
 function judgeNoteRounds(duel) {
-  return arr(duel.rounds).filter((round) => round.llm_judge_rationale || round.llm_judge_error || round.error);
+  return arr(duel.rounds).filter((round) => round.llm_judge_rationale || round.llm_judge_error || round.error || round.task_error);
 }
 
 function noteWinner(round) {
@@ -2298,7 +2320,7 @@ function noteScoreLine(round) {
 
 function judgeNoteText(round, index) {
   const task = round.task_name || ('round ' + (index + 1));
-  const note = round.llm_judge_error || round.error || round.llm_judge_rationale || '[NO NOTE TEXT]';
+  const note = round.llm_judge_error || round.task_error || round.error || round.llm_judge_rationale || '[NO NOTE TEXT]';
   return [
     'Task: ' + task,
     'Winner: ' + noteWinner(round),

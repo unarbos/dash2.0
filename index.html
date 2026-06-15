@@ -1219,6 +1219,7 @@ tbody tr:hover td { background: var(--surface-raised); }
     </div>
   </section>
 
+  <!-- SWE-bench Verified temporarily disabled
   <section class="section" id="swebench-section" aria-labelledby="swebench-heading">
     <div class="section-head">
       <div class="section-title" id="swebench-heading"><strong>SWE-bench Verified</strong> / sample-50</div>
@@ -1228,6 +1229,7 @@ tbody tr:hover td { background: var(--surface-raised); }
       <div class="empty">[LOADING SWE-BENCH]</div>
     </div>
   </section>
+  -->
 
   <section class="section" aria-label="Miner queue">
     <div class="miners-stack">
@@ -1268,6 +1270,7 @@ const DATA_URLS = [
 ];
 const FULL_DATA_URL = './dashboard-summary.json';
 const SUBMISSIONS_URL = './api/submissions';
+/* SWE-bench Verified temporarily disabled
 const SWEBENCH_URL = '/swebench-local.json';
 const SWEBENCH_PUBLIC_SNAPSHOT = {
   latest: {
@@ -1303,6 +1306,7 @@ const SWEBENCH_PUBLIC_SNAPSHOT = {
     }
   }
 };
+*/
 const POLL_MS = 15_000;
 const MAIN_REPO_URL = 'https://github.com/unarbos/ninja';
 const noteCache = new Map();
@@ -1958,6 +1962,12 @@ function secondsDuration(seconds) {
   return compactDuration(value * 1000);
 }
 
+/* SWE-bench Verified temporarily disabled
+function currentKingCommit(data) {
+  const king = data && data.current_king;
+  return king && (king.commit_sha || king.runtime_commit_sha || king.display_commit_sha);
+}
+
 function scoreText(score) {
   if (!score || !Number.isFinite(Number(score.total_count))) return '--';
   return num(score.resolved_count) + '/' + num(score.total_count);
@@ -1966,11 +1976,6 @@ function scoreText(score) {
 function baselineName(bench) {
   const baseline = bench && bench.baseline;
   return (baseline && (baseline.name || baseline.repo_url || 'mini-swe-agent')) || 'mini-swe-agent';
-}
-
-function currentKingCommit(data) {
-  const king = data && data.current_king;
-  return king && (king.commit_sha || king.runtime_commit_sha || king.display_commit_sha);
 }
 
 function benchmarkForCurrentKing(payload, data) {
@@ -2029,6 +2034,7 @@ async function loadSwebench(data) {
     $('swebench-meta').textContent = 'PUBLIC SNAPSHOT';
   }
 }
+*/
 
 function queueAcceptedValue(item) {
   return item.accepted_at ? ago(item.accepted_at) : '--';
@@ -2553,7 +2559,7 @@ function renderAll(data) {
   renderPoolRebuild(lastData);
   renderKing(lastData);
   renderActiveDuel(status);
-  loadSwebench(lastData);
+  // loadSwebench(lastData); // SWE-bench Verified temporarily disabled
   restoreUiState(uiState);
   scheduleIdle(() => {
     renderQueue(status.queue, status.netuid);

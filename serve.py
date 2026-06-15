@@ -2,6 +2,7 @@
 import http.server
 import socketserver
 import os
+import sys
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -24,6 +25,18 @@ DUEL_URL_TEMPLATE = "https://us-east-1.hippius.com/constantinople/sn66/duels/{du
 DUEL_URL_FALLBACK_TEMPLATE = "https://s3.hippius.com/constantinople/sn66/duels/{duel_id}/duel.json"
 PORT = int(os.environ.get("PORT", 80))
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_TAU_SRC = os.environ.get(
+    "TAU_SRC",
+    os.path.abspath(os.path.join(SCRIPT_DIR, "..", "tau", "src")),
+)
+if _TAU_SRC not in sys.path:
+    sys.path.insert(0, _TAU_SRC)
+try:
+    from dashboard_queue import augment_dashboard_payload
+except Exception:
+    def augment_dashboard_payload(payload, *, dashboard_data_path):
+        return payload
+
 DEFAULT_LOCAL_DASHBOARD_PATH = os.path.join(SCRIPT_DIR, "dashboard_data.json")
 LOCAL_DASHBOARD_PATH = os.environ.get(
     "DASHBOARD_DATA_PATH",
@@ -36,6 +49,10 @@ SUBMISSIONS_API_UPSTREAM = os.environ.get(
     "http://127.0.0.1:8066/api/submissions",
 )
 POOL_TARGET_PER_POOL = max(1, int(os.environ.get("POOL_TARGET_PER_POOL", "50")))
+
+
+def _compact_dashboard_path(filename: str) -> str:
+    return os.path.join(os.path.dirname(LOCAL_DASHBOARD_PATH), filename)
 
 
 def _pool_task_file_count(pool_dir: str) -> int:
@@ -102,12 +119,15 @@ def _attach_pool_rebuild(payload: dict) -> dict:
 _dashboard_cache = {"data": None, "ts": 0}
 _dashboard_summary_cache = {"data": None, "ts": 0, "local_mtime": None}
 _dashboard_home_cache = {"data": None, "ts": 0, "local_mtime": None}
-_dashboard_payload_cache = {"payload": None, "local_mtime": None}
+_dashboard_payload_cache = {"payload": None, "local_mtime": None, "ts": 0.0}
+_compact_dashboard_cache: dict[str, dict[str, object]] = {}
 _swebench_cache = {"data": None, "ts": 0, "latest_mtime": None}
 _duel_index_cache = {"data": None, "ts": 0}
 _duel_cache = {}
 _cache_lock = threading.Lock()
-CACHE_TTL = 5
+_payload_rebuild_lock = threading.Lock()
+CACHE_TTL = 30
+AUGMENT_CACHE_TTL = 30
 DUEL_INDEX_CACHE_TTL = 60
 DUEL_CACHE_TTL = 60
 MAX_DUEL_CACHE_ITEMS = 64
@@ -235,13 +255,21 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             )
 
     def _read_local_dashboard(self):
+        now = time.monotonic()
+        with _cache_lock:
+            if _dashboard_cache["data"] and (now - _dashboard_cache["ts"]) < CACHE_TTL:
+                return _dashboard_cache["data"]
         try:
             with open(LOCAL_DASHBOARD_PATH, "rb") as f:
                 data = f.read()
             payload = json.loads(data)
             if not isinstance(payload, dict) or "duels" not in payload:
                 return None
-            return self._augment_dashboard_links(data)
+            augmented = self._augment_dashboard_links(payload)
+            with _cache_lock:
+                _dashboard_cache["data"] = augmented
+                _dashboard_cache["ts"] = now
+            return augmented
         except Exception:
             return None
 
@@ -707,6 +735,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         })
 
     def _dashboard_payload_from_local_or_remote(self):
+        now = time.monotonic()
         local_mtime = None
         try:
             local_mtime = os.path.getmtime(LOCAL_DASHBOARD_PATH)
@@ -715,20 +744,41 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
         with _cache_lock:
             cached = _dashboard_payload_cache.get("payload")
-            if cached is not None and local_mtime is not None and _dashboard_payload_cache.get("local_mtime") == local_mtime:
-                return cached, local_mtime
+            cached_ts = float(_dashboard_payload_cache.get("ts") or 0.0)
+            if cached is not None:
+                if local_mtime is not None and _dashboard_payload_cache.get("local_mtime") == local_mtime:
+                    return cached, local_mtime
+                if (now - cached_ts) < AUGMENT_CACHE_TTL:
+                    return cached, local_mtime
 
-        try:
-            with open(LOCAL_DASHBOARD_PATH, "rb") as f:
-                payload = json.loads(f.read())
-        except Exception:
-            dashboard_data = self._fetch_dashboard()
-            payload = json.loads(dashboard_data)
+        with _payload_rebuild_lock:
+            with _cache_lock:
+                cached = _dashboard_payload_cache.get("payload")
+                cached_ts = float(_dashboard_payload_cache.get("ts") or 0.0)
+                if cached is not None:
+                    if local_mtime is not None and _dashboard_payload_cache.get("local_mtime") == local_mtime:
+                        return cached, local_mtime
+                    if (time.monotonic() - cached_ts) < AUGMENT_CACHE_TTL:
+                        return cached, local_mtime
 
-        with _cache_lock:
-            _dashboard_payload_cache["payload"] = payload
-            _dashboard_payload_cache["local_mtime"] = local_mtime
-        return payload, local_mtime
+            try:
+                with open(LOCAL_DASHBOARD_PATH, "rb") as f:
+                    payload = json.loads(f.read())
+            except Exception:
+                dashboard_data = self._fetch_dashboard()
+                payload = json.loads(dashboard_data)
+
+            if isinstance(payload, dict):
+                payload = augment_dashboard_payload(
+                    payload,
+                    dashboard_data_path=LOCAL_DASHBOARD_PATH,
+                )
+
+            with _cache_lock:
+                _dashboard_payload_cache["payload"] = payload
+                _dashboard_payload_cache["local_mtime"] = local_mtime
+                _dashboard_payload_cache["ts"] = time.monotonic()
+            return payload, local_mtime
 
     def _json_cache_for_dashboard(self, cache, summarizer):
         now = time.monotonic()
@@ -754,13 +804,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             cache["local_mtime"] = local_mtime
         return data
 
-    def _augment_dashboard_links(self, data):
-        try:
-            payload = json.loads(data)
-        except Exception:
-            return data
+    def _apply_dashboard_links_in_place(self, payload):
         if not isinstance(payload, dict):
-            return data
+            return payload
 
         links = payload.setdefault("links", {})
         if isinstance(links, dict):
@@ -779,9 +825,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self._prefer_pr_url(item)
             active = status.get("active_duel")
             if isinstance(active, dict) and active.get("duel_id") is not None:
-                links = self._active_duel_pr_urls(active["duel_id"])
+                duel_links = self._active_duel_pr_urls(active["duel_id"])
                 for role in ("king", "challenger"):
-                    pr_url = active.get(f"{role}_pr_url") or links.get(role)
+                    pr_url = active.get(f"{role}_pr_url") or duel_links.get(role)
                     if pr_url:
                         active[f"{role}_pr_url"] = str(pr_url)
                         active[f"{role}_repo_url"] = str(pr_url)
@@ -791,17 +837,113 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         for index, summary in enumerate(summaries):
             if not isinstance(summary, dict) or summary.get("duel_id") is None:
                 continue
-            links = self._duel_pr_urls(summary["duel_id"]) if index >= enrich_start else {}
+            duel_links = self._duel_pr_urls(summary["duel_id"]) if index >= enrich_start else {}
             for role in ("king", "challenger"):
-                pr_url = summary.get(f"{role}_pr_url") or links.get(role)
+                pr_url = summary.get(f"{role}_pr_url") or duel_links.get(role)
                 if pr_url:
                     summary[f"{role}_pr_url"] = str(pr_url)
                     summary[f"{role}_repo_url"] = str(pr_url)
+        return payload
 
-        return json.dumps(payload, separators=(",", ":")).encode()
+    def _load_augmented_compact_dashboard(self, filename: str) -> dict:
+        path = _compact_dashboard_path(filename)
+        if not os.path.isfile(path):
+            payload, _ = self._dashboard_payload_from_local_or_remote()
+            if filename == "dashboard-home.json":
+                return self._summarize_home_payload(payload)
+            if filename == "dashboard-summary.json":
+                return self._summarize_dashboard_payload(payload)
+            raise FileNotFoundError(path)
 
-    def _build_duel_index_from_dashboard(self, dashboard_data):
-        payload = json.loads(dashboard_data)
+        now = time.monotonic()
+        try:
+            local_mtime = os.path.getmtime(path)
+        except Exception:
+            local_mtime = None
+
+        with _cache_lock:
+            cached = _compact_dashboard_cache.get(filename)
+            if isinstance(cached, dict) and cached.get("payload") is not None:
+                cached_ts = float(cached.get("ts") or 0.0)
+                if local_mtime is not None and cached.get("mtime") == local_mtime:
+                    return cached["payload"]
+                if (now - cached_ts) < AUGMENT_CACHE_TTL:
+                    return cached["payload"]
+
+        with _payload_rebuild_lock:
+            with _cache_lock:
+                cached = _compact_dashboard_cache.get(filename)
+                if isinstance(cached, dict) and cached.get("payload") is not None:
+                    cached_ts = float(cached.get("ts") or 0.0)
+                    if local_mtime is not None and cached.get("mtime") == local_mtime:
+                        return cached["payload"]
+                    if (time.monotonic() - cached_ts) < AUGMENT_CACHE_TTL:
+                        return cached["payload"]
+
+            with open(path, "rb") as handle:
+                payload = json.loads(handle.read())
+            if not isinstance(payload, dict):
+                raise ValueError(f"{filename} is not a JSON object")
+
+            payload = augment_dashboard_payload(
+                payload,
+                dashboard_data_path=LOCAL_DASHBOARD_PATH,
+            )
+            payload = _attach_pool_rebuild(payload)
+            payload = self._apply_dashboard_links_in_place(payload)
+
+            with _cache_lock:
+                _compact_dashboard_cache[filename] = {
+                    "payload": payload,
+                    "mtime": local_mtime,
+                    "ts": time.monotonic(),
+                }
+            return payload
+
+    def _fetch_compact_dashboard_bytes(self, cache, filename: str) -> bytes:
+        now = time.monotonic()
+        try:
+            local_mtime = os.path.getmtime(_compact_dashboard_path(filename))
+        except Exception:
+            local_mtime = None
+
+        with _cache_lock:
+            if cache["data"] and (now - cache["ts"]) < CACHE_TTL:
+                return cache["data"]
+            if cache["data"] and local_mtime is not None and cache.get("local_mtime") == local_mtime:
+                cache["ts"] = now
+                return cache["data"]
+
+        payload = self._load_augmented_compact_dashboard(filename)
+        if filename == "dashboard-home.json":
+            links = payload.get("links") if isinstance(payload.get("links"), dict) else {}
+            payload["links"] = {
+                **links,
+                "duels_html": "./duels.html",
+                "dashboard_summary": "./dashboard-summary.json",
+            }
+        data = json.dumps(payload, separators=(",", ":")).encode()
+        with _cache_lock:
+            cache["data"] = data
+            cache["ts"] = now
+            cache["local_mtime"] = local_mtime
+        return data
+
+    def _augment_dashboard_links(self, data):
+        if isinstance(data, dict):
+            payload = data
+        else:
+            try:
+                payload = json.loads(data)
+            except Exception:
+                return data
+        if not isinstance(payload, dict):
+            return data
+        return json.dumps(self._apply_dashboard_links_in_place(payload), separators=(",", ":")).encode()
+
+    def _build_duel_index_from_payload(self, payload):
+        if not isinstance(payload, dict):
+            raise ValueError("dashboard payload is not a JSON object")
         entries = []
         for summary in payload.get("duels", []):
             if not isinstance(summary, dict) or summary.get("duel_id") is None:
@@ -884,10 +1026,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return data
 
     def _fetch_dashboard_summary(self):
-        return self._json_cache_for_dashboard(_dashboard_summary_cache, self._summarize_dashboard_payload)
+        return self._fetch_compact_dashboard_bytes(
+            _dashboard_summary_cache,
+            "dashboard-summary.json",
+        )
 
     def _fetch_dashboard_home(self):
-        return self._json_cache_for_dashboard(_dashboard_home_cache, self._summarize_home_payload)
+        return self._fetch_compact_dashboard_bytes(
+            _dashboard_home_cache,
+            "dashboard-home.json",
+        )
 
     def _fetch_duel_index(self):
         now = time.monotonic()
@@ -895,9 +1043,21 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if _duel_index_cache["data"] and (now - _duel_index_cache["ts"]) < DUEL_INDEX_CACHE_TTL:
                 return _duel_index_cache["data"]
 
+        try:
+            payload = self._load_augmented_compact_dashboard("dashboard-summary.json")
+            data = self._build_duel_index_from_payload(payload)
+        except Exception:
+            data = None
+        if data is not None:
+            with _cache_lock:
+                _duel_index_cache["data"] = data
+                _duel_index_cache["ts"] = now
+            return data
+
         dashboard_data = self._fetch_dashboard()
         try:
-            data = self._build_duel_index_from_dashboard(dashboard_data)
+            payload = json.loads(dashboard_data)
+            data = self._build_duel_index_from_payload(payload)
         except Exception:
             data = None
         if data is not None:

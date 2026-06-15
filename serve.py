@@ -585,7 +585,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def _round_summary(self, source):
         if not isinstance(source, dict):
             return {}
-        return self._copy_fields(source, ("task_name", "winner", "llm_judge_winner", "error")) or {}
+        return self._copy_fields(source, ("task_name", "winner", "llm_judge_winner", "error", "task_error")) or {}
 
     def _duel_summary(self, source):
         fields = (

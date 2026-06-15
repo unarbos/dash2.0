@@ -829,7 +829,20 @@ function num(value) {
   return Number.isFinite(Number(value)) ? Number(value).toLocaleString() : '--';
 }
 
+function isTaskErrorRound(round) {
+  if (!round) return false;
+  if (round.task_error) return true;
+  return String(round.error || '').startsWith('task_error:');
+}
+
 function duelErrorCount(duel) {
+  const rounds = arr(duel && duel.rounds);
+  if (rounds.length) {
+    return rounds.filter((round) => {
+      const winner = String(round && round.winner || '').toLowerCase();
+      return winner === 'error' && !isTaskErrorRound(round);
+    }).length;
+  }
   return Number((duel && duel.errors) || 0);
 }
 
@@ -1333,6 +1346,7 @@ function roundNoteText(duelId, round, index) {
 
 function roundWinner(round) {
   const rawWinner = String((round && round.winner) || '').toLowerCase();
+  if (isTaskErrorRound(round)) return 'tie';
   if (rawWinner === 'error' || (round && round.error)) return 'error';
   return rawWinner || 'tie';
 }
@@ -1343,7 +1357,8 @@ function judgeWinner(round) {
 
 function roleLabel(value) {
   const normalized = String(value || 'tie').toLowerCase();
-  return normalized === 'error' ? 'TASK ERROR' : normalized.toUpperCase();
+  if (normalized === 'error') return 'TASK ERROR';
+  return normalized.toUpperCase();
 }
 
 function roundWinnerLabel(round) {
@@ -1606,7 +1621,7 @@ function renderRoundRows(duel, round, index) {
   return '<tr class="round-row" data-round-key="' + escapeHtml(key) + '">' +
     '<td class="expand-cell">' + (open ? '-' : '+') + '</td>' +
     '<td class="task-cell"><span' + tooltipAttrs(task) + '>' + escapeHtml(taskLabel) + '</span></td>' +
-    '<td>' + winnerTag(winner) + '</td>' +
+    '<td>' + winnerTag(winner, round) + '</td>' +
     '<td>' + escapeHtml(round.llm_judge_consensus_status || '--') + '</td>' +
     '<td>' + escapeHtml(round.king_exit_reason || '--') + '</td>' +
     '<td>' + escapeHtml(round.challenger_exit_reason || '--') + '</td>' +
@@ -1616,24 +1631,27 @@ function renderRoundRows(duel, round, index) {
   '<tr class="round-detail-row ' + (open ? 'open' : '') + '" id="round-detail-' + escapeHtml(key) + '"><td class="round-detail" colspan="8">' + (open ? renderRoundDetail(duel, round, index) : '') + '</td></tr>';
 }
 
-function winnerTag(winner) {
+function winnerTag(winner, round) {
   if (winner === 'challenger') return '<span class="tag good">Challenger</span>';
   if (winner === 'king') return '<span class="tag bad">King</span>';
   if (winner === 'error') return '<span class="tag warn">Task error</span>';
+  if (round && isTaskErrorRound(round)) {
+    return '<span class="tag">Tie</span><span class="metric-note">Task error</span>';
+  }
   return '<span class="tag">Tie</span>';
 }
 
 function renderRoundDetail(duel, round, index) {
   const duelId = idText(duel.duel_id);
   const task = round.task_name || ('round-' + (index + 1));
-  const note = round.llm_judge_error || round.error || round.llm_judge_rationale || '[NO RATIONALE]';
+  const note = round.llm_judge_error || round.task_error || round.error || round.llm_judge_rationale || '[NO RATIONALE]';
   const winner = roundWinner(round);
   const llmWinner = judgeWinner(round);
   const scoreLine = roundScoreLine(round);
   const metrics =
     '<div class="round-metric-grid">' +
-      '<div class="round-metric"><div class="metric-label">Winner</div><div class="metric-note">' + winnerTag(winner) + '</div></div>' +
-      '<div class="round-metric"><div class="metric-label">LLM Judge</div><div class="metric-note">' + winnerTag(llmWinner) + '</div></div>' +
+      '<div class="round-metric"><div class="metric-label">Winner</div><div class="metric-note">' + winnerTag(winner, round) + '</div></div>' +
+      '<div class="round-metric"><div class="metric-label">LLM Judge</div><div class="metric-note">' + winnerTag(llmWinner, round) + '</div></div>' +
       '<div class="round-metric"><div class="metric-label">Consensus</div><div class="metric-note">' + escapeHtml(round.llm_judge_consensus_status || '--') + '</div></div>' +
       '<div class="round-metric"><div class="metric-label">Consensus round</div><div class="metric-note">' + escapeHtml(round.llm_judge_consensus_round || '--') + '</div></div>' +
       '<div class="round-metric"><div class="metric-label">King Exit</div><div class="metric-note">' + escapeHtml(round.king_exit_reason || '--') + '</div></div>' +
